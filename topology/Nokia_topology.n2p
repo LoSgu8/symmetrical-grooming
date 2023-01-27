@@ -1,98 +1,204 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<network description="" name="" currentDate="1674645613173" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="203">
-	<node id="2" description="" name="Seattle" xCoord="-122.3321" yCoord="47.6062" mapLayout2NodeXYPositionMap=" -122.3321 47.6062" population="0.0" siteName="" isUp="true" layersWithIconsDefined="">
+<network description="" name="" currentDate="1674645613173" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="2274">
+	<node id="2" description="" name="Seattle" xCoord="-122.3321" yCoord="47.6062" mapLayout2NodeXYPositionMap=" -122.3321 47.6062" population="0.0" siteName="undefined" isUp="true" layersWithIconsDefined="">
+		<tag value="Island1"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
-	<node id="3" description="" name="Portland" xCoord="-122.6784" yCoord="45.5152" mapLayout2NodeXYPositionMap=" -122.6784 45.5152" population="0.0" siteName="" isUp="true" layersWithIconsDefined="">
+	<node id="3" description="" name="Portland" xCoord="-122.6784" yCoord="45.5152" mapLayout2NodeXYPositionMap=" -122.6784 45.5152" population="0.0" siteName="undefined" isUp="true" layersWithIconsDefined="">
+		<tag value="Island1"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="4" description="" name="Sacramento" xCoord="-121.4944" yCoord="38.5816" mapLayout2NodeXYPositionMap=" -121.4944 38.5816" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island1"/>
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="5" description="" name="San Francisco" xCoord="-122.4194" yCoord="37.7749" mapLayout2NodeXYPositionMap=" -122.4194 37.7749" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="6" description="" name="Los Angeles" xCoord="-118.2437" yCoord="34.0522" mapLayout2NodeXYPositionMap=" -118.2437 34.0522" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="7" description="" name="San Diego" xCoord="-117.1611" yCoord="32.7157" mapLayout2NodeXYPositionMap=" -117.1611 32.7157" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="8" description="" name="Las Vegas" xCoord="-115.1391" yCoord="36.1716" mapLayout2NodeXYPositionMap=" -115.1391 36.1716" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="9" description="" name="Salt Lake City" xCoord="-111.891" yCoord="40.7608" mapLayout2NodeXYPositionMap=" -111.891 40.7608" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island1"/>
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="10" description="" name="Billings" xCoord="-108.5007" yCoord="45.7833" mapLayout2NodeXYPositionMap=" -108.5007 45.7833" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island1"/>
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="11" description="" name="Denver" xCoord="-104.9903" yCoord="39.7392" mapLayout2NodeXYPositionMap=" -104.9903 39.7392" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="12" description="" name="Phoenix" xCoord="-112.074" yCoord="33.4484" mapLayout2NodeXYPositionMap=" -112.074 33.4484" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="13" description="" name="Albany" xCoord="-73.7562" yCoord="42.6526" mapLayout2NodeXYPositionMap=" -73.7562 42.6526" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="14" description="" name="Atlanta" xCoord="-84.3877" yCoord="33.7488" mapLayout2NodeXYPositionMap=" -84.3877 33.7488" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<tag value="Island5"/>
+		<tag value="Island6"/>
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="15" description="" name="Austin" xCoord="-97.7431" yCoord="30.2672" mapLayout2NodeXYPositionMap=" -97.7431 30.2672" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="16" description="" name="Boston" xCoord="-71.0589" yCoord="42.3601" mapLayout2NodeXYPositionMap=" -71.0589 42.3601" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="17" description="" name="Buffalo" xCoord="-78.8784" yCoord="42.8864" mapLayout2NodeXYPositionMap=" -78.8784 42.8864" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="18" description="" name="Charlotte" xCoord="-80.8431" yCoord="35.2271" mapLayout2NodeXYPositionMap=" -80.8431 35.2271" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island6"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="19" description="" name="Chicago" xCoord="-87.6298" yCoord="41.8781" mapLayout2NodeXYPositionMap=" -87.6298 41.8781" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<tag value="Island8"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="20" description="" name="Cincinnati" xCoord="-84.512" yCoord="39.1031" mapLayout2NodeXYPositionMap=" -84.512 39.1031" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="21" description="" name="Cleveland" xCoord="-81.6944" yCoord="41.4993" mapLayout2NodeXYPositionMap=" -81.6944 41.4993" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<tag value="Island8"/>
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="22" description="" name="Columbus" xCoord="-82.9988" yCoord="39.9612" mapLayout2NodeXYPositionMap=" -82.9988 39.9612" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="23" description="" name="Dallas" xCoord="-96.797" yCoord="32.7767" mapLayout2NodeXYPositionMap=" -96.797 32.7767" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<tag value="Island4"/>
+		<tag value="Island5"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="24" description="" name="Detroit" xCoord="-83.0458" yCoord="42.3314" mapLayout2NodeXYPositionMap=" -83.0458 42.3314" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island8"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="25" description="" name="El Paso" xCoord="-106.485" yCoord="31.7619" mapLayout2NodeXYPositionMap=" -106.485 31.7619" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island2"/>
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="26" description="" name="Greensboro" xCoord="-79.792" yCoord="36.0726" mapLayout2NodeXYPositionMap=" -79.792 36.0726" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island6"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="27" description="" name="Houston" xCoord="-95.3698" yCoord="29.7604" mapLayout2NodeXYPositionMap=" -95.3698 29.7604" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="28" description="" name="Indianapolis" xCoord="-86.1581" yCoord="39.7684" mapLayout2NodeXYPositionMap=" -86.1581 39.7684" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="29" description="" name="Kansas City" xCoord="-94.5786" yCoord="39.0997" mapLayout2NodeXYPositionMap=" -94.5786 39.0997" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="30" description="" name="Miami" xCoord="-80.1918" yCoord="25.7617" mapLayout2NodeXYPositionMap=" -80.1918 25.7617" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="31" description="" name="Milwaukee" xCoord="-87.9065" yCoord="43.0389" mapLayout2NodeXYPositionMap=" -87.9065 43.0389" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="32" description="" name="Minneapolis" xCoord="-93.265" yCoord="44.9778" mapLayout2NodeXYPositionMap=" -93.265 44.9778" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="33" description="" name="Nashville" xCoord="-86.7816" yCoord="36.1627" mapLayout2NodeXYPositionMap=" -86.7816 36.1627" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island9"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="34" description="" name="New Orleans" xCoord="-90.0715" yCoord="29.9511" mapLayout2NodeXYPositionMap=" -90.0715 29.9511" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="35" description="" name="New York City" xCoord="-74.006" yCoord="40.7128" mapLayout2NodeXYPositionMap=" -74.006 40.7128" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="36" description="" name="Norfolk" xCoord="-76.2859" yCoord="36.8508" mapLayout2NodeXYPositionMap=" -76.2859 36.8508" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island6"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="37" description="" name="Omaha" xCoord="-95.9345" yCoord="41.2565" mapLayout2NodeXYPositionMap=" -95.9345 41.2565" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="38" description="" name="Orlando" xCoord="-81.3789" yCoord="28.5384" mapLayout2NodeXYPositionMap=" -81.3789 28.5384" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="39" description="" name="Philadelphia" xCoord="-75.1652" yCoord="39.9526" mapLayout2NodeXYPositionMap=" -75.1652 39.9526" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="40" description="" name="Pittsburgh" xCoord="-79.9959" yCoord="40.4406" mapLayout2NodeXYPositionMap=" -79.9959 40.4406" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="41" description="" name="Raleigh" xCoord="-78.6382" yCoord="35.7796" mapLayout2NodeXYPositionMap=" -78.6382 35.7796" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island6"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="42" description="" name="Rochester" xCoord="-77.6088" yCoord="43.1566" mapLayout2NodeXYPositionMap=" -77.6088 43.1566" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="43" description="" name="San Antonio" xCoord="-98.4946" yCoord="29.4252" mapLayout2NodeXYPositionMap=" -98.4946 29.4252" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="44" description="" name="Sant Louis" xCoord="-90.1994" yCoord="38.627" mapLayout2NodeXYPositionMap=" -90.1994 38.627" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island3"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="45" description="" name="Tampa" xCoord="-82.4572" yCoord="27.9506" mapLayout2NodeXYPositionMap=" -82.4572 27.9506" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island4"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="46" description="" name="Washington" xCoord="-77.0369" yCoord="38.9072" mapLayout2NodeXYPositionMap=" -77.0369 38.9072" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island6"/>
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
 	<node id="159" description="" name="Hartford" xCoord="-72.6734" yCoord="41.7658" mapLayout2NodeXYPositionMap=" -72.6734 41.7658" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="Island7"/>
+		<attribute key="$$$Node_ATTNAME_OPTICALSWITCHTYPE" value="com.net2plan.niw.OadmArchitecture_generic"/>
 	</node>
-	<layer id="1" description="" name="Layer 0" isDefaultLayer="true" linkCapacityUnitsName="GHz" demandTrafficUnitsName="Gb/s">
+	<layer id="1" description="" name="WDM" isDefaultLayer="false" linkCapacityUnitsName="GHz" demandTrafficUnitsName="Gb/s">
 		<link id="79" description="" name="Link-0" originNodeId="2" destinationNodeId="10" capacity="4950.0" lengthInKm="1079.0" bidirectionalPairId="80" nominalColor="-16777216" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
 		</link>
 		<link id="80" description="" name="Link-1" originNodeId="10" destinationNodeId="2" capacity="4950.0" lengthInKm="1079.0" bidirectionalPairId="79" nominalColor="-16777216" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
@@ -337,6 +443,12 @@
 		</link>
 		<link id="201" description="" name="Link-121" originNodeId="45" destinationNodeId="38" capacity="4950.0" lengthInKm="135.0" bidirectionalPairId="200" nominalColor="-16777216" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
 		</link>
+		<sourceRouting>
+		</sourceRouting>
+		<hopByHopRouting>
+		</hopByHopRouting>
+	</layer>
+	<layer id="203" description="" name="IP" isDefaultLayer="true" linkCapacityUnitsName="Gb/s" demandTrafficUnitsName="Gb/s">
 		<sourceRouting>
 		</sourceRouting>
 		<hopByHopRouting>
