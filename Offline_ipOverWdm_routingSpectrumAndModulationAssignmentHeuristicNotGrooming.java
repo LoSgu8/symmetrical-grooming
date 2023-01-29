@@ -11,7 +11,9 @@
  *******************************************************************************/
 
 
+import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.WDMUtils;
@@ -116,7 +118,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
 	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 40 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
-	private InputParameter transponderTypesInfo = new InputParameter ("transponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
+	private InputParameter transponderTypesInfo = new InputParameter ("transponderTypesInfo", "10 1 1 600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the IP layer (-1 means default layer)");
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter networkRecoveryType = new InputParameter ("networkRecoveryType", "#select# not-fault-tolerant single-srg-tolerant-static-lp 1+1-srg-disjoint-lps" , "Establish if the design should be tolerant or not to single SRG failures (SRGs are as defined in the input NetPlan). First option is that the design should not be fault tolerant, the second means that failed lightpaths are not recovered, but an overprovisioned should be made so enough lightpaths survive to carry all the traffic in every failure. The third means that each lightpath is 1+1 protceted by a SRG-disjoint one, that uses the same transponder");
@@ -124,12 +126,13 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	
 	private NetPlan netPlan;
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
-	private Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11;
 	private NetworkLayer wdmLayer, ipLayer;
-	private WDMUtils.TransponderTypesInfo tpInfo;
-	private int N, Ewdm, Dip, S, T;
+	private WDMUtils.TransponderTypesInfo transponderInfo;
+	private int NodeNumber, LinkNumberWDM, DemandsNumberIP, SlotPerFiber, TransponderNumber;
 	private boolean singleSRGToleranceNot11Type;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
+
+	private DoubleMatrix1D RegeneratorOccupancy;
 	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 	
 	@Override
@@ -160,11 +163,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		}
 
 		/* Basic checks */
-		this.N = netPlan.getNumberOfNodes();
-		this.Ewdm = netPlan.getNumberOfLinks(wdmLayer);
-		this.Dip = netPlan.getNumberOfDemands(ipLayer);
-		this.S = numFrequencySlotsPerFiber.getInt();
-		if (N == 0 || Ewdm == 0 || Dip == 0) throw new Net2PlanException("This algorithm requires a topology with links and a demand set");
+		this.NodeNumber = netPlan.getNumberOfNodes();
+		this.LinkNumberWDM = netPlan.getNumberOfLinks(wdmLayer);
+		this.DemandsNumberIP = netPlan.getNumberOfDemands(ipLayer);
+		this.SlotPerFiber = numFrequencySlotsPerFiber.getInt();
+		if (NodeNumber == 0 || LinkNumberWDM == 0 || DemandsNumberIP == 0) throw new Net2PlanException("This algorithm requires a topology with links and a demand set");
 		this.singleSRGToleranceNot11Type = networkRecoveryType.getString().equals("single-srg-tolerant-static-lp");
 		
 		if (singleSRGToleranceNot11Type && (netPlan.getNumberOfSRGs() == 0)) throw new Net2PlanException ("No SRGs are defined, so there is no reason to use the single-SRG failure-tolerant design option");
@@ -176,9 +179,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		else throw new Net2PlanException ("Wrong input parameters");
 		
 		/* Store transpoder info */
-		WDMUtils.setFibersNumFrequencySlots(netPlan, S, wdmLayer);
-		this.tpInfo = new WDMUtils.TransponderTypesInfo(transponderTypesInfo.getString());
-		this.T = tpInfo.getNumTypes();
+		WDMUtils.setFibersNumFrequencySlots(netPlan, SlotPerFiber, wdmLayer);
+		this.transponderInfo = new WDMUtils.TransponderTypesInfo(transponderTypesInfo.getString());
+		this.TransponderNumber = transponderInfo.getNumTypes();
 
 		/* Remove all routes in current netPlan object. Initialize link capacities and attributes, and demand offered traffic */
 		/* WDM and IP layer are in source routing type */
@@ -187,23 +190,22 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		netPlan.removeAllMulticastDemands(wdmLayer);
 
 		/* Initialize the slot occupancy */
-		this.frequencySlot2FiberOccupancy_se = DoubleFactory2D.dense.make(S , Ewdm); 
+		this.frequencySlot2FiberOccupancy_se = DoubleFactory2D.dense.make(SlotPerFiber, LinkNumberWDM);
+		this.RegeneratorOccupancy = DoubleFactory1D.dense.make(NodeNumber);
 
 		/* Compute the candidate path list of possible paths */
-		this.cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer) , k.getInt(), tpInfo.getMaxOpticalReachKm() , -1, maxPropagationDelayMs.getDouble(), -1, -1, -1 , null , wdmLayer);
-		this.cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
+		this.cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer) , k.getInt(), transponderInfo.getMaxOpticalReachKm() , -1, maxPropagationDelayMs.getDouble(), -1, -1, -1 , null , wdmLayer);
 		
 		/* Compute the CPL, adding the routes */
 		/* 1+1 case: as many routes as 1+1 valid pairs (then, the same sequence of links can be in more than one Route).  */
 		/* rest of the cases: each sequence of links appears at most once */
 		Map<Link,Double> linkLengthMap = new HashMap<Link,Double> (); for (Link e : netPlan.getLinks(wdmLayer)) linkLengthMap.put(e , e.getLengthInKm());
-		final int maximumNumberOfPaths = T*k.getInt()*Dip;
+		final int maximumNumberOfPaths = TransponderNumber *k.getInt()* DemandsNumberIP;
 		List<Integer> transponderType_p = new ArrayList<Integer> (maximumNumberOfPaths);
 		List<Double> cost_p = new ArrayList<Double> (maximumNumberOfPaths); 
 		List<Double> lineRate_p = new ArrayList<Double> (maximumNumberOfPaths); 
 		List<Integer> numSlots_p = new ArrayList<Integer> (maximumNumberOfPaths);
 		List<List<Link>> seqLinks_p = new ArrayList<List<Link>> (maximumNumberOfPaths);
-		List<List<Link>> seqLinks2_p = cpl11 == null? null : new ArrayList<List<Link>> (maximumNumberOfPaths);
 		List<int []> regPositions_p = new ArrayList<int []> (maximumNumberOfPaths);
 		List<int []> regPositions2_p = new ArrayList<int []> (maximumNumberOfPaths);
 		List<Demand> ipDemand_p = new ArrayList<Demand> (maximumNumberOfPaths);
@@ -214,31 +216,27 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			boolean atLeastOnePathOrPathPair = false;
 			List<Integer> pathListThisDemand = new LinkedList<Integer> ();
 			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
-			for (int t = 0 ; t < T ; t ++)
+			for (int t = 0; t < TransponderNumber; t ++)
 			{
-				final boolean isRegenerable = tpInfo.isOpticalRegenerationPossible(t);
-				for (Object sp : cpl11 != null? cpl11.get(nodePair) : cpl.get(nodePair))
+				final boolean isRegenerable = transponderInfo.isOpticalRegenerationPossible(t);
+				for (Object sp :  cpl.get(nodePair))
 				{
-					List<Link> firstPath = (cpl11 == null)? ((List<Link>) sp) : ((Pair<List<Link>,List<Link>>) sp).getFirst(); 
-					List<Link> secondPath = (cpl11 == null)? null : ((Pair<List<Link>,List<Link>>) sp).getSecond (); 
-					if (!isRegenerable && (getLengthInKm(firstPath) > tpInfo.getOpticalReachKm(t))) break;
-					if (secondPath != null) if (!isRegenerable && (getLengthInKm(secondPath) > tpInfo.getOpticalReachKm(t))) break;
+					List<Link> firstPath = (List<Link>) sp;
+					if (!isRegenerable && (getLengthInKm(firstPath) > transponderInfo.getOpticalReachKm(t))) break;
 
-					final int [] regPositions1 = isRegenerable? WDMUtils.computeRegeneratorPositions(firstPath , tpInfo.getOpticalReachKm(t)) : new int [firstPath.size()];
-					final int [] regPositions2 = cpl11 == null? null : isRegenerable? WDMUtils.computeRegeneratorPositions(secondPath , tpInfo.getOpticalReachKm(t)) : new int [secondPath.size()];
-					final int numRegeneratorsNeeded = !isRegenerable? 0 : (int) IntUtils.sum(regPositions1) + (secondPath == null? 0 : (int) IntUtils.sum(regPositions2)) ;
-					final double costOfLightpathOr11Pair = tpInfo.getCost(t) * (cpl11 != null? 2 : 1) + (tpInfo.getRegeneratorCost(t) * numRegeneratorsNeeded);
+					final int [] regPositions1 = isRegenerable? WDMUtils.computeRegeneratorPositions(firstPath , frequencySlot2FiberOccupancy_se, transponderInfo.getOpticalReachKm(t)) : new int [firstPath.size()];
+					final int numRegeneratorsNeeded = !isRegenerable? 0 : (int) IntUtils.sum(regPositions1);
+					final double costOfLightpathOr11Pair = transponderInfo.getCost(t) + (transponderInfo.getRegeneratorCost(t) * numRegeneratorsNeeded);
 
 					final int pathIndex = cost_p.size();
 					cost_p.add (costOfLightpathOr11Pair);
 					transponderType_p.add (t);
-					lineRate_p.add(tpInfo.getLineRateGbps(t));
-					numSlots_p.add(tpInfo.getNumSlots(t));
+					lineRate_p.add(transponderInfo.getLineRateGbps(t));
+					numSlots_p.add(transponderInfo.getNumSlots(t));
 					ipDemand_p.add(ipDemand);
 					seqLinks_p.add(firstPath);
 					regPositions_p.add(regPositions1);
 					pathListThisDemand.add(pathIndex);
-					if (cpl11 != null) { seqLinks2_p.add(secondPath); regPositions2_p.add(regPositions2); }
 					atLeastOnePathOrPathPair = true;
 				}
 			}
@@ -277,17 +275,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				for (int pathIndex : ipDemand2WDMPathListMap.get (ipDemand))
 				{
 					List<Link> firstPath = seqLinks_p.get(pathIndex);
-					List<Link> secondPath = cpl11 == null? null : seqLinks2_p.get(pathIndex);
 					Pair<Integer,Integer> slotIds = null;
 					int slotId = -1;
-					if (cpl11 == null)
-						slotId = WDMUtils.spectrumAssignment_firstFit(firstPath , frequencySlot2FiberOccupancy_se , numSlots_p.get(pathIndex));
-					else
-						slotIds = WDMUtils.spectrumAssignment_firstFitTwoRoutes(firstPath, secondPath, frequencySlot2FiberOccupancy_se , numSlots_p.get(pathIndex));
+
+					slotId = WDMUtils.spectrumAssignment_firstFit(firstPath , frequencySlot2FiberOccupancy_se , numSlots_p.get(pathIndex));
+
 					
 					/* Check if the path (or 1+1 path pair) is not feasible */
-					if (cpl11 == null) if (slotId == -1) continue;
-					if (cpl11 != null) if (slotIds == null) continue;
+					if (slotId == -1) continue;
 					
 					/* If the performance metric is better than existing, this is the best choice */
 					final double extraCarriedTraffic = getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (ipDemand , lineRate_p.get(pathIndex) , seqLinks_p.get(pathIndex));
@@ -295,8 +290,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					if (performanceIndicator > best_performanceMetric)
 					{
 						best_performanceMetric = performanceIndicator;
-						best_rsa = new WDMUtils.RSA(firstPath , cpl11 != null? slotIds.getFirst() : slotId , numSlots_p.get(pathIndex) , regPositions_p.get(pathIndex));
-						best_rsa2 = cpl11 == null? null : new WDMUtils.RSA(secondPath , slotIds.getSecond() , numSlots_p.get(pathIndex) , regPositions2_p.get(pathIndex));
+						best_rsa = new WDMUtils.RSA(firstPath , slotId , numSlots_p.get(pathIndex) , regPositions_p.get(pathIndex));
 						best_pathIndex = pathIndex;
 					}
 				}
@@ -314,13 +308,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
 				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , ipDemand.getBlockedTraffic());
 				netPlan.addRoute(ipDemand , ipTrafficToCarry , ipTrafficToCarry , Arrays.asList(ipLink), null);
-				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , null);
-				if (cpl11 != null)
-				{
-					final Route lpBackup = WDMUtils.addLightpath(newWDMDemand , best_rsa2 , 0);
-					WDMUtils.allocateResources(best_rsa2 , frequencySlot2FiberOccupancy_se , null);
-					lp.addBackupRoute(lpBackup);
-				}
+				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , RegeneratorOccupancy);
 				break;
 			}
 			
@@ -351,7 +339,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	/* A vector with the blocked traffic for each demand (in the single-SRG failure tolerance, is averaged for each state) */
 	private double [] getVectorIPDemandAverageAllStatesBlockedTraffic ()
 	{
-		double [] res = new double [Dip];
+		double [] res = new double [DemandsNumberIP];
 		for (Demand ipDemand : netPlan.getDemands(ipLayer))
 		{
 			res [ipDemand.getIndex()] = ipDemand.getBlockedTraffic();
