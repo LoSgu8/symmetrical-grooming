@@ -218,13 +218,19 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
 			for (int t = 0; t < TransponderNumber; t ++)
 			{
+				System.out.println(t);
 				final boolean isRegenerable = transponderInfo.isOpticalRegenerationPossible(t);
 				for (Object sp :  cpl.get(nodePair))
 				{
 					List<Link> firstPath = (List<Link>) sp;
 					if (!isRegenerable && (getLengthInKm(firstPath) > transponderInfo.getOpticalReachKm(t))) break;
-
-					final int [] regPositions1 = isRegenerable? WDMUtils.computeRegeneratorPositions(firstPath , frequencySlot2FiberOccupancy_se, transponderInfo.getOpticalReachKm(t)) : new int [firstPath.size()];
+					final int[] regPositions1;
+					try {
+						regPositions1 = isRegenerable ? WDMUtils.computeRegeneratorPositions(firstPath, frequencySlot2FiberOccupancy_se, transponderInfo.getOpticalReachKm(t)) : new int[firstPath.size()];
+					} catch(Exception e)
+					{
+						continue;
+					}
 					final int numRegeneratorsNeeded = !isRegenerable? 0 : (int) IntUtils.sum(regPositions1);
 					final double costOfLightpathOr11Pair = transponderInfo.getCost(t) + (transponderInfo.getRegeneratorCost(t) * numRegeneratorsNeeded);
 
@@ -250,7 +256,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		boolean atLeastOneLpAdded = false;
 		Set<Integer> ipDemandIndexesNotToTry = new HashSet<Integer> ();
 		double totalCost = 0;
-		do 
+		do
 		{
 			double [] b_d = getVectorIPDemandAverageAllStatesBlockedTraffic ();
 			int [] ipDemandIndexes = DoubleUtils.sortIndexes(b_d , OrderingType.DESCENDING);
@@ -266,7 +272,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				/* If the demand is already fully satisfied, skip it */
 				if (isIpDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; } 
 				
-				/* Try all the possible routes and all the possible transpoder types. Take the solution with the best 
+				/* Try all the possible routes and all the possible transponder types. Take the solution with the best
 				 * performance metric (average extra carried traffic / transponder cost) */
 				WDMUtils.RSA best_rsa = null;
 				WDMUtils.RSA best_rsa2 = null;
