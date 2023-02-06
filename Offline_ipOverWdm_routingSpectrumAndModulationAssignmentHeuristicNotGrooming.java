@@ -23,6 +23,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.*;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 /**
  * Algorithm based on an heuristic solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, 
@@ -209,6 +210,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<int []> regPositions_p = new ArrayList<int []> (maximumNumberOfPaths);
 		List<Demand> ipDemand_p = new ArrayList<Demand> (maximumNumberOfPaths);
 		Map<Demand,List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand,List<Integer>> ();
+		Map<Pair<Node,Node>,List<IPLink>> mapIPLinks = new HashMap<>();
 
 		for (Demand ipDemand : netPlan.getDemands(ipLayer))
 		{
@@ -217,6 +219,37 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			List<Integer> pathListThisDemand = new LinkedList<Integer> ();
 			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
 
+			for (List<Link> singlePath :  cpl.get(nodePair)){
+
+
+				//path -> list(subpath)
+				List<List<Link>> subpathsList = calculateSubPath(singlePath);
+				for (List<Link> subpath : subpathsList){
+					if (subpath.get(0).hasTag("METRO")) { // METRO link -> ZR+ is used
+						// If subpath length is shorter than the maximum reach of the transponder -> find the best modulation
+						// otherwise split the subpath in shorter subpaths
+						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
+							Modulation bestModulation = this.transponders.get(0).getBestModulationFormat(getLengthInKm(subpath));
+						} else { // split the subpath in shorter subpaths
+							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
+							int index = subpathsList.indexOf(subpath);
+							subpathsList.remove(subpath);
+							subpathsList.addAll(index, subsubpaths);
+						}
+
+					} else { // CORE link -> LR is used
+						// As in METRO check subpath lenght vs transponder's max reach
+						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
+							Modulation bestModulation = this.transponders.get(1).getBestModulationFormat(getLengthInKm(subpath));
+						} else { // split the subpath in shorter subpaths
+							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
+							int index = subpathsList.indexOf(subpath);
+							subpathsList.remove(subpath);
+							subpathsList.addAll(index, subsubpaths);
+						}
+					}
+				}
+			}
 
 			/*
 			for (int t = 0; t < TransponderNumber; t++)
@@ -393,10 +426,81 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		lrmods.add(new Modulation("PCS 16 QAM", 300, 100, 4700));
 		lrmods.add(new Modulation("64 QAM", 300, 50, 100));
 		lrmods.add(new Modulation("16 QAM", 200, 50, 900));
-		lrmods.add(new Modulation("QPSK", 100, 50,3000));
+		lrmods.add(new Modulation("QPSK", 100, 50, 3000));
 
 		this.transponders.add(new Transponder("Long Reach OEO", 1, lrmods));
 		maxReach = 4700;
+	}
+
+
+	/* --- ADDED FUNCTIONS --- */
+	/*
+	* calculateSubPath method
+	* Split the path into subpaths each one belonging to a single network category (METRO and CORE)
+	*/
+	private List<List<Link>> calculateSubPath(List<Link> path) {
+		List<List<Link>> subPaths = new ArrayList<>();
+		SortedSet<String> tags = path.get(0).getTags();
+		tags.retainAll(Arrays.asList("METRO", "CORE"));
+		List<Link> currentSubPath = new ArrayList<>();
+		for (Link link : path) {
+			SortedSet<String> tags2 = link.getTags();
+			tags2.retainAll(Arrays.asList("METRO", "CORE"));
+			tags.retainAll(tags2);
+			if(tags.isEmpty())
+			{
+				subPaths.add(currentSubPath);
+				currentSubPath = new ArrayList<>();
+				tags = link.getTags();
+				tags.retainAll(Arrays.asList("METRO", "CORE"));
+			}
+			currentSubPath.add(link);
+		}
+		if(!currentSubPath.isEmpty() && !subPaths.contains(currentSubPath))
+		{
+			subPaths.add(currentSubPath);
+		}
+
+		return subPaths;
+	}
+
+	/*
+	 * calculateSubPathBasedOnTransponder method
+	 * Used for subpaths with longer distance of the maxReach, the subpath is split in the minimum number of subpaths
+	 * having distance supported by the transponder modulation
+	 */
+	private List<List<Link>> calculateSubPathsBasedOnTransponder(List<Link> path, Transponder transponder)
+	{
+		int[] best = new int[path.size()];
+		Arrays.fill(best,1);
+
+		// Find the best modulation(best spectral efficiency) with that requires the minimum number of regenerators
+		List<Modulation> modulations = transponder.getModulations();
+		modulations.sort(Comparator.comparingDouble(Modulation::getSpectralEfficiency));
+		for(Modulation modulation: modulations) {
+			int[] regenerators = WDMUtils.computeRegeneratorPositions(path,modulation.getReach());
+
+			if(Arrays.stream(regenerators).sum()<=Arrays.stream(best).sum())
+			{
+				best = regenerators;
+			}
+		}
+
+		// Found the best modulation, split the given path in multiple subpaths
+		List<List<Link>> subPaths = new ArrayList<>();
+		List<Link> currentSubPath = new ArrayList<>();
+		currentSubPath.add(path.get(0));
+		for(int link=1; link<path.size(); link++)
+		{
+			if(best[link]==1)
+			{
+				subPaths.add(currentSubPath);
+				currentSubPath = new ArrayList<>();
+			}
+			currentSubPath.add(path.get(link));
+		}
+		subPaths.add(currentSubPath);
+		return subPaths;
 	}
 }
 
