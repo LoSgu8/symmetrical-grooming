@@ -229,7 +229,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						// If subpath length is shorter than the maximum reach of the transponder -> find the best modulation
 						// otherwise split the subpath in shorter subpaths
 						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
-							Modulation bestModulation = this.transponders.get(0).getBestModulationFormat(getLengthInKm(subpath));
+							Modulation bestModulation = this.transponders.get(0).getBestModulationFormat((int) getLengthInKm(subpath));
 						} else { // split the subpath in shorter subpaths
 							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
 							int index = subpathsList.indexOf(subpath);
@@ -240,7 +240,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					} else { // CORE link -> LR is used
 						// As in METRO check subpath lenght vs transponder's max reach
 						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
-							Modulation bestModulation = this.transponders.get(1).getBestModulationFormat(getLengthInKm(subpath));
+							Modulation bestModulation = this.transponders.get(1).getBestModulationFormat((int) getLengthInKm(subpath));
 						} else { // split the subpath in shorter subpaths
 							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
 							int index = subpathsList.indexOf(subpath);
