@@ -220,36 +220,27 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
 
 			for (List<Link> singlePath :  cpl.get(nodePair)){
-
-
 				//path -> list(subpath)
 				List<List<Link>> subpathsList = calculateSubPath(singlePath);
-				for (List<Link> subpath : subpathsList){
-					if (subpath.get(0).hasTag("METRO")) { // METRO link -> ZR+ is used
-						// If subpath length is shorter than the maximum reach of the transponder -> find the best modulation
-						// otherwise split the subpath in shorter subpaths
-						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
-							Modulation bestModulation = this.transponders.get(0).getBestModulationFormat((int) getLengthInKm(subpath));
-						} else { // split the subpath in shorter subpaths
-							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
-							int index = subpathsList.indexOf(subpath);
-							subpathsList.remove(subpath);
-							subpathsList.addAll(index, subsubpaths);
-						}
-
-					} else { // CORE link -> LR is used
-						// As in METRO check subpath lenght vs transponder's max reach
-						if (this.transponders.get(0).getMaxReach() > getLengthInKm(subpath)) {
-							Modulation bestModulation = this.transponders.get(1).getBestModulationFormat((int) getLengthInKm(subpath));
-						} else { // split the subpath in shorter subpaths
-							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(1));
-							int index = subpathsList.indexOf(subpath);
-							subpathsList.remove(subpath);
-							subpathsList.addAll(index, subsubpaths);
-						}
+				List<Modulation> modulationsList = new ArrayList<>();
+				for (int ind=0; ind<subpathsList.size(); ind++){
+					List<Link> subpath = subpathsList.get(ind);
+					//
+					// If subpath length is longer than the maximum reach of the transponder -> split the subpath in shorter subpaths
+					String tag = subpath.get(0).getTags().first(); // "METRO" or "CORE"
+					if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
+						List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(tag));
+						int index = subpathsList.indexOf(subpath);
+						subpathsList.remove(subpath);
+						subpathsList.addAll(index, subsubpaths);
+						subpath = subpathsList.get(ind);
 					}
+					//find the best modulation
+					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
+					modulationsList.add(bestModulation);
 				}
 			}
+
 
 			/*
 			for (int t = 0; t < TransponderNumber; t++)
@@ -428,7 +419,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		lrmods.add(new Modulation("16 QAM", 200, 50, 900));
 		lrmods.add(new Modulation("QPSK", 100, 50, 3000));
 
-		this.transponders.add(new Transponder("Long Reach OEO", 1, lrmods));
+		this.transponders.put("CORE", new Transponder("Long Reach OEO", 1, lrmods));
 		maxReach = 4700;
 	}
 
