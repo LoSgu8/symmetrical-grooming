@@ -213,20 +213,26 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		Map<Demand,List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand,List<Integer>> ();
 		Map<Pair<Node,Node>,List<IPLink>> mapIPLinks = new HashMap<>();
 
-		for (Demand ipDemand : netPlan.getDemands(ipLayer))
-		{
-			final Pair<Node,Node> nodePair = Pair.of(ipDemand.getIngressNode() , ipDemand.getEgressNode());
-			boolean atLeastOnePathOrPathPair = false;
-			List<Integer> pathListThisDemand = new LinkedList<Integer> ();
-			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
 
-			for (List<Link> singlePath :  cpl.get(nodePair)){
+
+		/* order demands according to QoS: first priority traffic, then best-effort.
+		 * If not able to satisfy priority traffic then throw Exception (no solution).
+		 * If not able to satisfy best effort traffic then go on and store statistics.
+		 */
+
+		for (Demand ipDemand : netPlan.getDemands(ipLayer)) {
+			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
+			boolean atLeastOnePathOrPathPair = false;
+			List<Integer> pathListThisDemand = new LinkedList<Integer>();
+			ipDemand2WDMPathListMap.put(ipDemand, pathListThisDemand);
+
+			for (List<Link> singlePath : cpl.get(nodePair)) {
 				//path -> list(subpath)
 				List<List<Link>> subpathsList = calculateSubPath(singlePath);
 				List<Modulation> modulationsList = new ArrayList<>();
-				for (int ind=0; ind<subpathsList.size(); ind++){
+				for (int ind = 0; ind < subpathsList.size(); ind++) {
 					List<Link> subpath = subpathsList.get(ind);
-					//
+
 					// If subpath length is longer than the maximum reach of the transponder -> split the subpath in shorter subpaths
 					String tag = subpath.get(0).getTags().first(); // "METRO" or "CORE"
 					if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
@@ -245,9 +251,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				//non c'è nessun link IP (un link ip per ogni demand)
 
 			}
+		}
 
-
-			/*
+		/*
 			for (int t = 0; t < TransponderNumber; t++)
 			{
 				System.out.println(t);
@@ -279,7 +285,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					atLeastOnePathOrPathPair = true;
 				}
 			}
-			*/
+
 
 			if (!atLeastOnePathOrPathPair) throw new Net2PlanException ("There are no possible routes (or 1+1 pairs) for a demand (" + ipDemand + "). The topology may be not connected enough, or the optical reach may be too small");
 		}
@@ -319,7 +325,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 					slotId = WDMUtils.spectrumAssignment_firstFit(firstPath, frequencySlot2FiberOccupancy_se, numSlots_p.get(pathIndex));
 
-					/* Check if the path (or 1+1 path pair) is not feasible */
+					// Check if the path (or 1+1 path pair) is not feasible
 					if (slotId == -1) continue;
 
 					/* If the performance metric is better than existing, this is the best choice */
@@ -337,7 +343,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				/* No lp could be added to this demand, try with the next */
 				if (best_pathIndex == -1) { ipDemandIndexesNotToTry.add(ipDemand.getIndex()); continue; }
 
-				/* Add the lightpath to the design */
+				// Add the lightpath to the design
 				atLeastOneLpAdded = true;
 				totalCost += cost_p.get(best_pathIndex);
 				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex), RoutingType.SOURCE_ROUTING, null , wdmLayer);

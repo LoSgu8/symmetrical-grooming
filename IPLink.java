@@ -26,6 +26,10 @@ public class IPLink {
         spareCapacity -= demand.getOfferedTraffic();
     }
 
+    public WDMUtils.RSA getRsa() {
+        return rsa;
+    }
+
     public List<Link> getPath() {
         return rsa.seqLinks;
     }
