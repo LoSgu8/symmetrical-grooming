@@ -128,7 +128,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
 	private NetworkLayer wdmLayer, ipLayer;
 	//private WDMUtils.TransponderTypesInfo transponderInfo;
-	private List<Transponder> transponders = new ArrayList<>();
+	private Map<String,Transponder> transponders = new HashMap<>();
 	private int NodeNumber, LinkNumberWDM, DemandsNumberIP, SlotPerFiber, TransponderNumber;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
 
@@ -136,6 +136,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 
 	private static int maxReach;
+
 
 
 	@Override
@@ -239,6 +240,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
 					modulationsList.add(bestModulation);
 				}
+				// guarda se ci sono ip link liberi
+
+				//non c'è nessun link IP (un link ip per ogni demand)
+
 			}
 
 
@@ -405,7 +410,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		zrmods.add(new Modulation("QPSK", 200, 75, 3000));
 		zrmods.add(new Modulation("QPSK", 100, 75, 3000));
 
-		this.transponders.add(new Transponder("ZR+ OEO", 0.5, zrmods));
+		this.transponders.put("METRO", new Transponder("ZR+ OEO", 0.5, zrmods));
 
 		/* Long reach OEO Transponder definition */
 		List<Modulation> lrmods = new ArrayList<>(9);

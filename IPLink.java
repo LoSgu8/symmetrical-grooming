@@ -1,23 +1,21 @@
+import cern.colt.matrix.tint.IntMatrix2D;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.libraries.WDMUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class IPLink {
-    private Node startNode;
-    private Node endNode;
-    private List<Link> path;
-    private Modulation modulation;
-    private List<Demand> demands;
+    private final WDMUtils.RSA rsa;
+    private final Modulation modulation;
+    private final List<Demand> demands;
     private double spareCapacity;
 
 
-    public IPLink(Node startNode, Node endNode, List<Link> path, Modulation modulation) {
-        this.startNode = startNode;
-        this.endNode = endNode;
-        this.path = path;
+    public IPLink(Node startNode, Node endNode, List<Link> path, IntMatrix2D seqFrequencySlots_se, Modulation modulation) {
+        this.rsa = new WDMUtils.RSA(path, seqFrequencySlots_se);
         this.modulation = modulation;
         this.spareCapacity = modulation.getDatarate();
         this.demands = new ArrayList<>((int)spareCapacity/100);
@@ -29,15 +27,15 @@ public class IPLink {
     }
 
     public List<Link> getPath() {
-        return path;
+        return rsa.seqLinks;
     }
 
     public Node getStartNode() {
-        return startNode;
+        return rsa.ingressNode;
     }
 
     public Node getEndNode() {
-        return endNode;
+        return rsa.egressNode;
     }
 
     public Modulation getModulation() {

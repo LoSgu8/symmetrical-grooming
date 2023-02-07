@@ -16,7 +16,7 @@ public class Transponder {
     public double getCost () { return this.cost; }
     public List<Modulation> getModulations () { return this.modulationList; }
 
-    public Modulation getBestModulationFormat(int pathLength)
+    public Modulation getBestModulationFormat(double pathLength)
     {
         Modulation best = null;
         double bestSpectralEfficiency = 0;
