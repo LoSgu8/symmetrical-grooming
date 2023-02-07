@@ -284,8 +284,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
 						final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
 						IPPath.add(n2pIPlink);
-						final double ipTrafficToCarry =ipLink.getModulation().getDatarate();
-						netPlan.addRoute(newDemand, ipTrafficToCarry, ipTrafficToCarry, ipLink.getPath(), null);
+						final double occupiedBandwidth = ipLink.getModulation().getChannelSpacing();
+						netPlan.addRoute(newDemand, occupiedBandwidth, occupiedBandwidth, ipLink.getPath(), null);
 						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, RegeneratorOccupancy);
 						if(transponders.get("CORE").getModulations().contains(modulation))
 						{
