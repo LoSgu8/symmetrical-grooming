@@ -135,7 +135,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private DoubleMatrix1D RegeneratorOccupancy;
 	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 
-	private static int maxReach;
+	private static int maxReach = -1;
 
 
 
@@ -212,6 +212,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<Demand> ipDemand_p = new ArrayList<Demand> (maximumNumberOfPaths);
 		Map<Demand,List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand,List<Integer>> ();
 		Map<Pair<Node,Node>,List<IPLink>> mapIPLinks = new HashMap<>();
+		int totalCost = 0;
 
 
 
@@ -219,7 +220,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		 * If not able to satisfy priority traffic then throw Exception (no solution).
 		 * If not able to satisfy best effort traffic then go on and store statistics.
 		 */
-
+		System.out.println("number of demands " + netPlan.getDemands(ipLayer).size());
 		for (Demand ipDemand : netPlan.getDemands(ipLayer)) {
 			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
 			boolean atLeastOnePathOrPathPair = false;
@@ -245,6 +246,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					//find the best modulation
 					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
 					modulationsList.add(bestModulation);
+					System.out.println("Subpath " + subpath.get(0).getOriginNode().getName()+ " "+subpath.get(subpath.size()-1).getDestinationNode().getName());
 				}
 				// guarda se ci sono ip link liberi
 
@@ -255,10 +257,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				for (int ind = 0; ind < subpathsList.size(); ind++) {
 					List<Link> subpath = subpathsList.get(ind);
 					Modulation modulation = modulationsList.get(ind);
-
+					System.out.println("From " + ipDemand.getIngressNode().getName()+" to " + ipDemand.getEgressNode().getName());
+					System.out.println("Subpath " + subpath.get(0).getOriginNode().getName()+ " "+subpath.get(subpath.size()-1).getDestinationNode().getName());
 					int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
 					if (slotid == -1) {
 						successInFindingPath = false;
+						System.out.println("Non trovato");
+						System.out.println("From " + ipDemand.getIngressNode().getName()+" to " + ipDemand.getEgressNode().getName());
+						System.out.println("Subpath " + subpath.get(0).getOriginNode().getName()+ " "+subpath.get(subpath.size()-1).getDestinationNode().getName());
 						break;
 					}
 				}
@@ -267,7 +273,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				if (successInFindingPath) {
 
 					atLeastOnePathOrPathPair = true;
-
+					List<Link> IPPath = new ArrayList<>();
 					for (int ind = 0; ind < subpathsList.size(); ind++) {
 						List<Link> subpath = subpathsList.get(ind);
 						Modulation modulation = modulationsList.get(ind);
@@ -275,13 +281,22 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
 						IPLink ipLink = new IPLink(subpath, slotid, modulation);
 						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getDatarate(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
-						final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
+						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
 						final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
-						final double ipTrafficToCarry = Math.min(ipLink.getModulation().getDatarate(), ipDemand.getBlockedTraffic());
-						netPlan.addRoute(ipDemand, ipTrafficToCarry, ipTrafficToCarry, ipLink.getPath(), null);
+						IPPath.add(n2pIPlink);
+						final double ipTrafficToCarry =ipLink.getModulation().getDatarate();
+						netPlan.addRoute(newDemand, ipTrafficToCarry, ipTrafficToCarry, ipLink.getPath(), null);
 						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, RegeneratorOccupancy);
+						if(transponders.get("CORE").getModulations().contains(modulation))
+						{
+							totalCost += transponders.get("CORE").getCost()*2;
+						}
+						else
+						{
+							totalCost += transponders.get("METRO").getCost()*2;
+						}
 					}
-
+					netPlan.addRoute(ipDemand,100,100,IPPath,null);
 					break;
 				}
 
@@ -290,10 +305,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				// check if the demand has not been satisfied due to insufficient resources in all paths
 
-				if (!atLeastOnePathOrPathPair) {
-					break;
-					// if best-effort ignore otherwise throw exception
-				}
+
 			}
 		}
 
@@ -402,7 +414,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		} while (atLeastOneLpAdded);
 		*/
-		WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
+		//WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
@@ -475,7 +487,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		lrmods.add(new Modulation("QPSK", 100, 50, 3000));
 
 		this.transponders.put("CORE", new Transponder("Long Reach OEO", 1, lrmods));
-		maxReach = 4700;
+		maxReach = -1;
 	}
 
 
@@ -486,18 +498,23 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	*/
 	private List<List<Link>> calculateSubPath(List<Link> path) {
 		List<List<Link>> subPaths = new ArrayList<>();
-		SortedSet<String> tags = path.get(0).getTags();
+		List<String> tags = new LinkedList<>( path.get(0).getTags());
 		tags.retainAll(Arrays.asList("METRO", "CORE"));
 		List<Link> currentSubPath = new ArrayList<>();
+		System.out.println("path size " +path.size());
 		for (Link link : path) {
-			SortedSet<String> tags2 = link.getTags();
+
+			List<String> tags2 = new LinkedList<>(link.getTags());
 			tags2.retainAll(Arrays.asList("METRO", "CORE"));
+			System.out.println("tag:" +tags.toString());
+			System.out.println("tag2:" +tags2.toString());
 			tags.retainAll(tags2);
+			System.out.println("tag:" +tags.toString());
 			if(tags.isEmpty())
 			{
 				subPaths.add(currentSubPath);
-				currentSubPath = new ArrayList<>();
-				tags = link.getTags();
+				currentSubPath = new LinkedList<>();
+				tags = new LinkedList<>(link.getTags());
 				tags.retainAll(Arrays.asList("METRO", "CORE"));
 			}
 			currentSubPath.add(link);
