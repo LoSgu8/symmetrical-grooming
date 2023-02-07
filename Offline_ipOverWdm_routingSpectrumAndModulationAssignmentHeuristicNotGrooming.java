@@ -294,7 +294,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		/* Main algorithm loop. Take one demand at a time, in a HLDA loop (ordered by average blocked traffic).
 		 * In each demand, try all possible path-transponder pairs, and take the best according to the performance metric:
 		 * avExtraTrafficCarried/transponderCost */
-		boolean atLeastOneLpAdded = false;
+		/*boolean atLeastOneLpAdded = false;
 		Set<Integer> ipDemandIndexesNotToTry = new HashSet<Integer> ();
 		double totalCost = 0;
 		do
@@ -304,17 +304,17 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			atLeastOneLpAdded = false;
 			for (int ipDemandIndex : ipDemandIndexes)
 			{
-				/* Not to try a demand if already fully satisfied or we tried and could not add a lp to it */
+				// Not to try a demand if already fully satisfied or we tried and could not add a lp to it
 				if (ipDemandIndexesNotToTry.contains(ipDemandIndex)) continue;
 
 				final Demand ipDemand = netPlan.getDemand(ipDemandIndex , ipLayer);
 				//ipDemand.setRoutingType(RoutingType.SOURCE_ROUTING);
 
-				/* If the demand is already fully satisfied, skip it */
+				/* If the demand is already fully satisfied, skip it
 				if (isIpDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; }
 
 				/* Try all the possible routes and all the possible transponder types. Take the solution with the best
-				 * performance metric (average extra carried traffic / transponder cost) */
+				 * performance metric (average extra carried traffic / transponder cost)
 				WDMUtils.RSA best_rsa = null;
 				double best_performanceMetric = 0;
 				int best_pathIndex = -1;
@@ -328,7 +328,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					// Check if the path (or 1+1 path pair) is not feasible
 					if (slotId == -1) continue;
 
-					/* If the performance metric is better than existing, this is the best choice */
+					/* If the performance metric is better than existing, this is the best choice
 					final double extraCarriedTraffic = getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (ipDemand , lineRate_p.get(pathIndex) , seqLinks_p.get(pathIndex));
 					final double performanceIndicator = extraCarriedTraffic / cost_p.get(pathIndex);
 					if (performanceIndicator > best_performanceMetric)
@@ -340,7 +340,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				}
 
 
-				/* No lp could be added to this demand, try with the next */
+				// No lp could be added to this demand, try with the next
 				if (best_pathIndex == -1) { ipDemandIndexesNotToTry.add(ipDemand.getIndex()); continue; }
 
 				// Add the lightpath to the design
@@ -357,7 +357,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 
 		} while (atLeastOneLpAdded);
-
+		*/
 		WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);

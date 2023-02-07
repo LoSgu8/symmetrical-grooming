@@ -14,8 +14,8 @@ public class IPLink {
     private double spareCapacity;
 
 
-    public IPLink(Node startNode, Node endNode, List<Link> path, IntMatrix2D seqFrequencySlots_se, Modulation modulation) {
-        this.rsa = new WDMUtils.RSA(path, seqFrequencySlots_se);
+    public IPLink(List<Link> path, int slotid, Modulation modulation) {
+        this.rsa = new WDMUtils.RSA(path, slotid, modulation.getChannelSpacing());
         this.modulation = modulation;
         this.spareCapacity = modulation.getDatarate();
         this.demands = new ArrayList<>((int)spareCapacity/100);
