@@ -249,7 +249,51 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				// guarda se ci sono ip link liberi
 
 				//non c'è nessun link IP (un link ip per ogni demand)
+				boolean successInFindingPath = true;
 
+				// check if the entire path has available resources
+				for (int ind = 0; ind < subpathsList.size(); ind++) {
+					List<Link> subpath = subpathsList.get(ind);
+					Modulation modulation = modulationsList.get(ind);
+
+					int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
+					if (slotid == -1) {
+						successInFindingPath = false;
+						break;
+					}
+				}
+
+				// if the entire path is able to accomodate the demand, assign the resources to it, otherwise check for the next path
+				if (successInFindingPath) {
+
+					atLeastOnePathOrPathPair = true;
+
+					for (int ind = 0; ind < subpathsList.size(); ind++) {
+						List<Link> subpath = subpathsList.get(ind);
+						Modulation modulation = modulationsList.get(ind);
+						//create IPLink
+						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
+						IPLink ipLink = new IPLink(subpath, slotid, modulation);
+						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getDatarate(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
+						final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
+						final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
+						final double ipTrafficToCarry = Math.min(ipLink.getModulation().getDatarate(), ipDemand.getBlockedTraffic());
+						netPlan.addRoute(ipDemand, ipTrafficToCarry, ipTrafficToCarry, ipLink.getPath(), null);
+						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, RegeneratorOccupancy);
+					}
+
+					break;
+				}
+
+				//Demand attributes Map<String><String> attributes =
+
+
+				// check if the demand has not been satisfied due to insufficient resources in all paths
+
+				if (!atLeastOnePathOrPathPair) {
+					break;
+					// if best-effort ignore otherwise throw exception
+				}
 			}
 		}
 
