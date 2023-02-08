@@ -215,11 +215,37 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		int totalCost = 0;
 
 
+		List<Demand> orderedDemands;
 
-		/* order demands according to QoS: first priority traffic, then best-effort.
+
+		/* Order the demands according to QoS: first priority traffic, then best-effort.
 		 * If not able to satisfy priority traffic then throw Exception (no solution).
-		 * If not able to satisfy best effort traffic then go on and store statistics.
+		 * If not able to satisfy best effort traffic then go on if the threshold (0.01%) has not been reached yet.
 		 */
+
+		// Order netPlan.getDemands(ipLayer) according
+		// to qosType (priority first, best-effort last)
+		orderedDemands = new LinkedList<Demand>(netPlan.getDemands(ipLayer));
+		Collections.sort(orderedDemands, new Comparator<Demand>() {
+			@Override
+			public int compare(Demand d1, Demand d2) {
+				if (d1.getQosType() == d2.getQosType())
+					return 0;
+				if (Objects.equals(d1.getQosType(), "Priority"))
+					return -1;
+				if (Objects.equals(d2.getQosType(), "BE"))
+					return 1;
+				return 0;
+			}
+		});
+
+		// Count the number of best-effort demands
+		int numberOfBestEffortDemands = 0;
+		for (Demand demand : orderedDemands) {
+			if (demand.getQosType().equals("BE")) numberOfBestEffortDemands++;
+		}
+		int unsatisfiedDemands = 0;
+
 		System.out.println("number of demands " + netPlan.getDemands(ipLayer).size());
 		for (Demand ipDemand : netPlan.getDemands(ipLayer)) {
 			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
@@ -299,122 +325,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					netPlan.addRoute(ipDemand,100,100,IPPath,null);
 					break;
 				}
-
-				//Demand attributes Map<String><String> attributes =
-
-
-				// check if the demand has not been satisfied due to insufficient resources in all paths
-
-
 			}
 		}
 
-		/*
-			for (int t = 0; t < TransponderNumber; t++)
-			{
-				System.out.println(t);
-				final boolean isRegenerable = transponderInfo.isOpticalRegenerationPossible(t);
-				isRegenerable
-				for (Object sp (singlepath) :  cpl.get(nodePair))
-				{
-					List<Link> firstPath = (List<Link>) sp;
-					if (!isRegenerable && (getLengthInKm(firstPath) > transponderInfo.getOpticalReachKm(t))) break;
-					final int[] regPositions1;
-					try {
-						regPositions1 = isRegenerable ? WDMUtils.computeRegeneratorPositions(firstPath, frequencySlot2FiberOccupancy_se, transponderInfo.getOpticalReachKm(t)) : new int[firstPath.size()];
-					} catch(Exception e)
-					{
-						continue;
-					}
-					final int numRegeneratorsNeeded = !isRegenerable? 0 : (int) IntUtils.sum(regPositions1);
-					final double costOfLightpathOr11Pair = transponderInfo.getCost(t) + (transponderInfo.getRegeneratorCost(t) * numRegeneratorsNeeded);
-
-					final int pathIndex = cost_p.size();
-					cost_p.add (costOfLightpathOr11Pair);
-					transponderType_p.add (t);
-					lineRate_p.add(transponderInfo.getLineRateGbps(t));
-					numSlots_p.add(transponderInfo.getNumSlots(t));
-					ipDemand_p.add(ipDemand);
-					seqLinks_p.add(firstPath);
-					regPositions_p.add(regPositions1);
-					pathListThisDemand.add(pathIndex);
-					atLeastOnePathOrPathPair = true;
-				}
-			}
-
-
-			if (!atLeastOnePathOrPathPair) throw new Net2PlanException ("There are no possible routes (or 1+1 pairs) for a demand (" + ipDemand + "). The topology may be not connected enough, or the optical reach may be too small");
-		}
-		final int P = transponderType_p.size(); // one per potential sequence of links (or 1+1 pairs of sequences) and transponder
-
-		/* Main algorithm loop. Take one demand at a time, in a HLDA loop (ordered by average blocked traffic).
-		 * In each demand, try all possible path-transponder pairs, and take the best according to the performance metric:
-		 * avExtraTrafficCarried/transponderCost */
-		/*boolean atLeastOneLpAdded = false;
-		Set<Integer> ipDemandIndexesNotToTry = new HashSet<Integer> ();
-		double totalCost = 0;
-		do
-		{
-			double [] b_d = getVectorIPDemandAverageAllStatesBlockedTraffic ();
-			int [] ipDemandIndexes = DoubleUtils.sortIndexes(b_d , OrderingType.DESCENDING);
-			atLeastOneLpAdded = false;
-			for (int ipDemandIndex : ipDemandIndexes)
-			{
-				// Not to try a demand if already fully satisfied or we tried and could not add a lp to it
-				if (ipDemandIndexesNotToTry.contains(ipDemandIndex)) continue;
-
-				final Demand ipDemand = netPlan.getDemand(ipDemandIndex , ipLayer);
-				//ipDemand.setRoutingType(RoutingType.SOURCE_ROUTING);
-
-				/* If the demand is already fully satisfied, skip it
-				if (isIpDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; }
-
-				/* Try all the possible routes and all the possible transponder types. Take the solution with the best
-				 * performance metric (average extra carried traffic / transponder cost)
-				WDMUtils.RSA best_rsa = null;
-				double best_performanceMetric = 0;
-				int best_pathIndex = -1;
-				for (int pathIndex : ipDemand2WDMPathListMap.get (ipDemand))
-				{
-					List<Link> firstPath = seqLinks_p.get(pathIndex);
-					int slotId = -1;
-
-					slotId = WDMUtils.spectrumAssignment_firstFit(firstPath, frequencySlot2FiberOccupancy_se, numSlots_p.get(pathIndex));
-
-					// Check if the path (or 1+1 path pair) is not feasible
-					if (slotId == -1) continue;
-
-					/* If the performance metric is better than existing, this is the best choice
-					final double extraCarriedTraffic = getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (ipDemand , lineRate_p.get(pathIndex) , seqLinks_p.get(pathIndex));
-					final double performanceIndicator = extraCarriedTraffic / cost_p.get(pathIndex);
-					if (performanceIndicator > best_performanceMetric)
-					{
-						best_performanceMetric = performanceIndicator;
-						best_rsa = new WDMUtils.RSA(firstPath , slotId , numSlots_p.get(pathIndex) , regPositions_p.get(pathIndex));
-						best_pathIndex = pathIndex;
-					}
-				}
-
-
-				// No lp could be added to this demand, try with the next
-				if (best_pathIndex == -1) { ipDemandIndexesNotToTry.add(ipDemand.getIndex()); continue; }
-
-				// Add the lightpath to the design
-				atLeastOneLpAdded = true;
-				totalCost += cost_p.get(best_pathIndex);
-				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex), RoutingType.SOURCE_ROUTING, null , wdmLayer);
-				newWDMDemand.setIntendedRecoveryType(recoveryTypeNewLps);
-				final Route lp = WDMUtils.addLightpath(newWDMDemand , best_rsa , lineRate_p.get(best_pathIndex));
-				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
-				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , ipDemand.getBlockedTraffic());
-				netPlan.addRoute(ipDemand , ipTrafficToCarry , ipTrafficToCarry , Arrays.asList(ipLink), null);
-				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , RegeneratorOccupancy);
-				break;
-			}
-
-		} while (atLeastOneLpAdded);
-		*/
-		//WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
