@@ -137,6 +137,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 	private static int maxReach = -1;
 
+	private final int START_DEMAND_NUMBER = 350;
 
 
 	@Override
@@ -216,10 +217,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<Demand> orderedDemands;
 
 
-		/* Order the demands according to QoS: first priority traffic, then best-effort.
-		 * If not able to satisfy priority traffic then throw Exception (no solution).
-		 * If not able to satisfy best effort traffic then go on if the threshold (0.01%) has not been reached yet.
-		 */
+		// Generate the demands in the IP layer using TrafficGenerator Class
+		TrafficGenerator trafficGenerator = new TrafficGenerator(netPlan);
+		trafficGenerator.generate(START_DEMAND_NUMBER);
+
 
 		// Order netPlan.getDemands(ipLayer) according
 		// to qosType (priority first, best-effort last)
