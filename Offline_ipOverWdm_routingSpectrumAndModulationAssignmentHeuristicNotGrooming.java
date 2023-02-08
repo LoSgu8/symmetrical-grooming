@@ -211,7 +211,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		Map<Demand, List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand, List<Integer>>();
 		Map<Pair<Node, Node>, List<IPLink>> mapIPLinks = new HashMap<>();
 		int totalCost = 0;
-
+		int unsatisfiedDemands = 0;
 
 		List<Demand> orderedDemands;
 
@@ -333,7 +333,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				} else {
 					// check if the threshold has been reached
 					unsatisfiedDemands++;
-					if((double)unsatisfiedDemands/numberOfBestEffortDemands>0.01)
+					if((double)unsatisfiedDemands/orderedDemands.size()>0.01)
 					{
 						return "BE demands drop larger than 0.01";
 					}
