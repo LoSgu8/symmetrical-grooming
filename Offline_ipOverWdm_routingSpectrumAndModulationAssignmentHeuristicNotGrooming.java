@@ -237,13 +237,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 		});
 
-		// Count the number of best-effort demands
-		int numberOfBestEffortDemands = 0;
-		for (Demand demand : orderedDemands) {
-			if (demand.getQosType().equals("BE")) numberOfBestEffortDemands++;
-		}
-		int unsatisfiedDemands = 0;
-
 		System.out.println("number of demands " + netPlan.getDemands(ipLayer).size());
 		for (Demand ipDemand : orderedDemands) {
 
