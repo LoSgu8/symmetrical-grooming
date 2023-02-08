@@ -1,9 +1,9 @@
 # symmetrical-grooming
 
-//TODO trovare un nome migliore (.)
-
 Net2plan-based evaluation for a network topology divided in subregions. Heuristic evaluation of which transponder type to select for each node based on transponder cost and available modulation.
 
+
+## Considerations
 
 
 ## Offline\_ipOverWdm\_routingSpectrumAndModulationAssignmentHeuristicNotGrooming.java
