@@ -15,6 +15,10 @@ New class to define transponder info (name, cost and available modulation list).
 
 * **getMaxReach** method: returns the max reach from all possible mopdulation formats.
 
+## Modulation.java
+
+Class to store modulation wit hthe fields: ModulationFormat, datarate, channelSpacing, reach.
+
 ## TrafficGenerator.java
 
 Randomly select a node from the list of nodes. Generate a demand with random QoS (Priority or Best Effort). Intermediate Nodes between CCORE and METRO regions are considered CORE nodes.
