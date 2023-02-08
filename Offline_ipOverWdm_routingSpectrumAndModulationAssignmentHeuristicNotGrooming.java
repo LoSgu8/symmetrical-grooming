@@ -240,7 +240,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		System.out.println("number of demands " + netPlan.getDemands(ipLayer).size());
 		for (Demand ipDemand : orderedDemands) {
 
-			//if (ipDemand.getQosType().equals("BE")) numberOfBestEffortDemands++;
 			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
 			boolean atLeastOnePath = false;
 			List<Integer> pathListThisDemand = new LinkedList<Integer>();
