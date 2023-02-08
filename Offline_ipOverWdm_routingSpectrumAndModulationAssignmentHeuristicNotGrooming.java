@@ -253,6 +253,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			List<Integer> pathListThisDemand = new LinkedList<Integer>();
 			ipDemand2WDMPathListMap.put(ipDemand, pathListThisDemand);
 
+
 			for (List<Link> singlePath : cpl.get(nodePair)) {
 				//path -> list(subpath)
 				List<List<Link>> subpathsList = calculateSubPath(singlePath);
