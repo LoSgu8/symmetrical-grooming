@@ -1,14 +1,13 @@
 # symmetrical-pancake
-* Python
-  - GNPy?
+//TODO trovare un nome migliore
 
-# SIUM
-WDMUtils for transponders
+Net2plan-based evaluation for a network topology divided in subregions. Heuristic evaluation of which transponder type to select for each node based on transponder cost and available modulation.
 
 
-# Offline\_ipOverWdm\_routingSpectrumAndModulationAssignmentHeuristicNotGrooming.java
 
-# Transponder.java
+## Offline\_ipOverWdm\_routingSpectrumAndModulationAssignmentHeuristicNotGrooming.java
+
+## Transponder.java
 
 New class to define transponder info (name, cost and available modulation list).
 
@@ -16,9 +15,11 @@ New class to define transponder info (name, cost and available modulation list).
 
 * **getMaxReach** method: returns the max reach from all possible mopdulation formats.
 
-# TrafficGenerator.java
+## TrafficGenerator.java
 
 Randomly select a node from the list of nodes. Generate a demand with random QoS (Priority or Best Effort). Intermediate Nodes between CCORE and METRO regions are considered CORE nodes.
+
+Each new demand is generated from the selected node respecting the simulation proportions given below:
 
 |           | CORE     |           | METRO    |           |
 | --------- | -------- | --------- | -------- | --------- |
