@@ -1,5 +1,6 @@
-# symmetrical-pancake
-//TODO trovare un nome migliore
+# symmetrical-grooming
+
+//TODO trovare un nome migliore (.)
 
 Net2plan-based evaluation for a network topology divided in subregions. Heuristic evaluation of which transponder type to select for each node based on transponder cost and available modulation.
 
@@ -33,3 +34,7 @@ Each new demand is generated from the selected node respecting the simulation pr
 | METRO     | 30%      |           | 50%      | 20%       |
 | QOS       | Priority |           | 50P/50BE | 50P/50BE  |
 
+
+## IPLink.java
+
+Defines the IP Link, contains info about RSA for the link, modulation, link capacity, and spare demand.
