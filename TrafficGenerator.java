@@ -8,7 +8,7 @@ import java.util.*;
 public class TrafficGenerator {
 
     private final NetPlan netPlan;
-    private final double probabilityOfStartingFromCore = 0.5;
+    private double probabilityOfStartingFromCore;
 
     /*
     min 350 services of 100Gbps, increase by 50 services
