@@ -18,12 +18,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.WDMUtils;
 
-import com.net2plan.utils.Constants.OrderingType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.*;
 
 import java.util.*;
-import java.util.function.IntUnaryOperator;
 
 /**
  * Algorithm based on an heuristic solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, 
@@ -124,6 +122,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the IP layer (-1 means default layer)");
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
+	private InputParameter NumberOfDemands = new InputParameter("NumberOfDemands", 350, "Number of demands to be generated");
 	private NetPlan netPlan;
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
 	private NetworkLayer wdmLayer, ipLayer;
@@ -137,8 +136,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 	private static int maxReach = -1;
 
-	private final int START_DEMAND_NUMBER = 350;
-
+	private int demandNumber;
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) {
@@ -168,10 +166,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		this.LinkNumberWDM = netPlan.getNumberOfLinks(wdmLayer);
 		this.DemandsNumberIP = netPlan.getNumberOfDemands(ipLayer);
 		this.SlotPerFiber = numFrequencySlotsPerFiber.getInt();
-		if (NodeNumber == 0 || LinkNumberWDM == 0 || DemandsNumberIP == 0)
+		if (NodeNumber == 0 || LinkNumberWDM == 0)
 			throw new Net2PlanException("This algorithm requires a topology with links and a demand set");
 
 		recoveryTypeNewLps = Demand.IntendedRecoveryType.NONE;
+
+		demandNumber = NumberOfDemands.getInt();
 
 		/* Store transpoder info */
 		WDMUtils.setFibersNumFrequencySlots(netPlan, SlotPerFiber, wdmLayer);
@@ -187,6 +187,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		/* WDM and IP layer are in source routing type */
 		netPlan.removeAllLinks(ipLayer);
 		netPlan.removeAllDemands(wdmLayer);
+		netPlan.removeAllDemands(ipLayer);
 		netPlan.removeAllMulticastDemands(wdmLayer);
 
 		/* Initialize the slot occupancy */
@@ -219,7 +220,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		// Generate the demands in the IP layer using TrafficGenerator Class
 		TrafficGenerator trafficGenerator = new TrafficGenerator(netPlan);
-		trafficGenerator.generate(START_DEMAND_NUMBER);
+		trafficGenerator.generate(demandNumber);
 
 
 		// Order netPlan.getDemands(ipLayer) according
@@ -230,9 +231,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			public int compare(Demand d1, Demand d2) {
 				if (d1.getQosType() == d2.getQosType())
 					return 0;
-				if (Objects.equals(d1.getQosType(), "Priority"))
+				if (Objects.equals(d1.getQosType(), "PRIORITY"))
 					return -1;
-				if (Objects.equals(d2.getQosType(), "BE"))
+				if (Objects.equals(d2.getQosType(), "BEST_EFFORT"))
 					return 1;
 				return 0;
 			}
@@ -302,7 +303,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						IPLink ipLink = new IPLink(subpath, slotid, modulation);
 						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getDatarate(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
 						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
-						final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
+						//final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
+						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
+
 						IPPath.add(n2pIPlink);
 						final double occupiedBandwidth = ipLink.getModulation().getChannelSpacing();
 						netPlan.addRoute(newDemand, occupiedBandwidth, occupiedBandwidth, ipLink.getPath(), null);
