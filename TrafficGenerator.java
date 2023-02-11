@@ -8,7 +8,7 @@ import java.util.*;
 public class TrafficGenerator {
 
     private final NetPlan netPlan;
-    private final double probabilityOfStartingFromCore = 0.5;
+    private double probabilityOfStartingFromCore;
 
     /*
     min 350 services of 100Gbps, increase by 50 services
@@ -185,8 +185,16 @@ public class TrafficGenerator {
             int randomNodeIndex = (int) (Math.random() * destinationCandidates.size());
             destinationNode = destinationCandidates.get(randomNodeIndex);
 
+
+            // create a Map with the "QoS" attribute of the demand
+            Map<String, String> demandAttributes = new HashMap<>();
+            //demandAttributes.put("QoS", demandQoS);
+
             // create a new demand
-            netPlan.addDemand(sourceNode, destinationNode, 100, 0, 0, 0, demandQoS);
+            netPlan.addDemand(sourceNode, destinationNode, 100.0, Constants.RoutingType.HOP_BY_HOP_ROUTING, demandAttributes, null);
+
+            // Set the demand QoS type
+            netPlan.getDemand(netPlan.getNumberOfDemands() - 1).setQoSType(demandQoS);
         }
     }
 }
