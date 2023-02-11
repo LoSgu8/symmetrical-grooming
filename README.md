@@ -7,7 +7,6 @@ Net2plan-based evaluation for a network topology divided in subregions. Heuristi
 
 - The traffic matrix is randomly drawn respecting the given probabilities.
 - OEO ZR+ transponders are used in metro links and OEO Long Reach transponders in core links.
-- 
 
 
 ## Topology
@@ -24,12 +23,12 @@ Whenever the path crosses different zones, the channel is regenerated in order t
 
 If the first *k* (parameter) possible shortest paths don't have enough resources to satisfy the demand, the demand is not routed (error returned in case of priority traffic, simple drop in case of best effort).
 
+
 ## Transponder.java
 
-Class to define transponder info (name, cost and available modulation list).
+Class to represents a Transponder, each transponder is characterized by a name, the cost and the list of available modulations.
 
 * **getBestModulationFormat** method: returns the best suitable modulation given a certain path lenght (best spectral efficiency)
-* **getMaxReach** method: returns the max reach from all possible mopdulation formats.
 
 ## Modulation.java
 
@@ -52,4 +51,4 @@ Each new demand is generated from the selected node respecting the simulation pr
 
 ## IPLink.java
 
-Defines the IP Link, contains info about RSA for the link, modulation, link capacity, and spare demand.
+Clas used to represent an IP link, each IP link object is characterized by a WDMUtils.RSA, the modulation used, its spare capacity and the carried demands.
