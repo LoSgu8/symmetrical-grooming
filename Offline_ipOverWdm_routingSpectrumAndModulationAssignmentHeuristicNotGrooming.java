@@ -307,7 +307,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						//create IPLink
 						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
 						IPLink ipLink = new IPLink(subpath, slotid, modulation);
-						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getDatarate(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
+						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
 						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
 						final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
 						IPPath.add(n2pIPlink);
