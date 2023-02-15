@@ -220,6 +220,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				}
 			}
 		}
+        for(Node node: netPlan.getNodes())
+        {
+            node.setAttribute("ZR",0);
+            node.setAttribute("LR",0);
+        }
 
 		// Generate the demands in the IP layer using TrafficGenerator Class
 		TrafficGenerator trafficGenerator = new TrafficGenerator(netPlan);
@@ -415,8 +420,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, null);
 						if (transponders.get("CORE").getModulations().contains(modulation)) {
 							totalCost += transponders.get("CORE").getCost() * 2;
+                            ipLink.getStartNode().setAttribute("LR",Integer.parseInt(ipLink.getStartNode().getAttribute("LR"))+1);
+                            ipLink.getEndNode().setAttribute("LR",Integer.parseInt(ipLink.getEndNode().getAttribute("LR"))+1);
 						} else {
 							totalCost += transponders.get("METRO").getCost() * 2;
+                            ipLink.getStartNode().setAttribute("ZR",Integer.parseInt(ipLink.getStartNode().getAttribute("ZR"))+1);
+                            ipLink.getEndNode().setAttribute("ZR",Integer.parseInt(ipLink.getEndNode().getAttribute("ZR"))+1);
 						}
 					}
 				}
