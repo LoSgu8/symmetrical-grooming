@@ -395,7 +395,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						{
 							ipList.add(ipLink);
 						}
-						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, RegeneratorOccupancy);
+						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, null);
 						if (transponders.get("CORE").getModulations().contains(modulation)) {
 							totalCost += transponders.get("CORE").getCost() * 2;
 						} else {
@@ -406,7 +406,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				netPlan.addRoute(ipDemand, ipDemand.getOfferedTraffic(), ipDemand.getOfferedTraffic(), IPPath, null);
 			}
 		}
-
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
