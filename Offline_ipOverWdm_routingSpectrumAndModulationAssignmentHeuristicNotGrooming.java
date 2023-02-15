@@ -128,6 +128,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private NetPlan netPlan;
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
 	private NetworkLayer wdmLayer, ipLayer;
+	//private WDMUtils.TransponderTypesInfo transponderInfo;
 	private Map<String,Transponder> transponders = new HashMap<>();
 	private int NodeNumber, LinkNumberWDM, DemandsNumberIP, SlotPerFiber, TransponderNumber;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
@@ -209,7 +210,16 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		int unsatisfiedDemands = 0;
 
 		List<Demand> orderedDemands;
-
+		for(Node n1: netPlan.getNodes())
+		{
+			for(Node n2: netPlan.getNodes())
+			{
+				if(!n1.equals(n2))
+				{
+					mapIPLinks.put(Pair.of(n1,n2),new ArrayList<>());
+				}
+			}
+		}
 
 		// Generate the demands in the IP layer using TrafficGenerator Class
 		TrafficGenerator trafficGenerator = new TrafficGenerator(netPlan);
@@ -219,10 +229,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		// Order netPlan.getDemands(ipLayer) according
 		// to qosType (priority first, best-effort last)
 		orderedDemands = new LinkedList<Demand>(netPlan.getDemands(ipLayer));
-		Collections.sort(orderedDemands, new Comparator<Demand>() {
+		orderedDemands.sort(new Comparator<Demand>() {
 			@Override
 			public int compare(Demand d1, Demand d2) {
-				if (d1.getQosType() == d2.getQosType())
+				if (Objects.equals(d1.getQosType(), d2.getQosType()))
 					return 0;
 				if (Objects.equals(d1.getQosType(), "PRIORITY"))
 					return -1;
@@ -232,13 +242,15 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 		});
 
-		System.out.println("number of demands " + netPlan.getDemands(ipLayer).size());
 		for (Demand ipDemand : orderedDemands) {
 
 			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
 			boolean atLeastOnePath = false;
-			List<Integer> pathListThisDemand = new LinkedList<Integer>();
+			List<Integer> pathListThisDemand = new LinkedList<>();
 			ipDemand2WDMPathListMap.put(ipDemand, pathListThisDemand);
+			int bestPathCost = Integer.MAX_VALUE;
+			List<List<Link>> bestPath = null;
+			List<Modulation> bestPathModulations = null;
 
 
 			for (List<Link> singlePath : cpl.get(nodePair)) {
@@ -281,7 +293,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					//find the best modulation
 					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
 					modulationsList.add(bestModulation);
-					System.out.println("Subpath " + subpath.get(0).getOriginNode().getName() + " " + subpath.get(subpath.size() - 1).getDestinationNode().getName());
 				}
 
 				boolean successInFindingPath = true;
@@ -290,65 +301,128 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				for (int ind = 0; ind < subpathsList.size(); ind++) {
 					List<Link> subpath = subpathsList.get(ind);
 					Modulation modulation = modulationsList.get(ind);
-					System.out.println("From " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName());
-					System.out.println("Subpath " + subpath.get(0).getOriginNode().getName() + " " + subpath.get(subpath.size() - 1).getDestinationNode().getName());
-					int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
-					if (slotid == -1) {
-						successInFindingPath = false;
-						System.out.println("Non trovato");
-						System.out.println("From " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName());
-						System.out.println("Subpath " + subpath.get(0).getOriginNode().getName() + " " + subpath.get(subpath.size() - 1).getDestinationNode().getName());
-						break;
+					//check if an ipLink already exists, if not check the wdm availability
+					boolean ipToAdd = true;
+					for(IPLink link: mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(),subpath.get(subpath.size()-1).getDestinationNode())))
+					{
+						if(link.getSpareCapacity()>=ipDemand.getOfferedTraffic())
+						{
+							ipToAdd = false;
+							break;
+						}
+					}
+					if(ipToAdd) {
+						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
+						if (slotid == -1) {
+							successInFindingPath = false;
+							break;
+						}
 					}
 				}
 
-				// if the entire path is able to accomodate the demand, assign the resources to it, otherwise check for the next path
+				// if the entire path is able to accomodate the demand, calculate cost and store the path with the smallest cost
 				if (successInFindingPath) {
 
 					atLeastOnePath = true;
-					List<Link> IPPath = new ArrayList<>();
-					for (int ind = 0; ind < subpathsList.size(); ind++) {
+					int cost = 0;
+					for(int ind = 0; ind < subpathsList.size(); ind++)
+					{
 						List<Link> subpath = subpathsList.get(ind);
 						Modulation modulation = modulationsList.get(ind);
-						//create IPLink
-						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
-						IPLink ipLink = new IPLink(subpath, slotid, modulation);
-						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
-						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
-						//final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
-						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
+						boolean ipToAdd = true;
+						for(IPLink link: mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(),subpath.get(subpath.size()-1).getDestinationNode())))
+						{
+							if(link.getSpareCapacity()>=ipDemand.getOfferedTraffic())
+							{
+								ipToAdd = false;
+								break;
+							}
+						}
+						if(ipToAdd)
+						{
+							if (transponders.get("CORE").getModulations().contains(modulation)) {
+								cost += transponders.get("CORE").getCost() * 2;
+							} else {
+								cost += transponders.get("METRO").getCost() * 2;
+							}
+						}
+					}
+					if(cost<bestPathCost)
+					{
+						bestPathCost = cost;
+						bestPath = subpathsList;
+						bestPathModulations = modulationsList;
+					}
+				}
+			}
 
+
+			//if no path has been found, handle the possible error
+			if (!atLeastOnePath) {
+				// if the demand Priority QoS, then return a message
+				if (Objects.equals(ipDemand.getQosType(), "PRIORITY")) {
+					throw new Net2PlanException("The demand from " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName() + '\n' +
+							"has not been satisfied due to insufficient resources (Priority) ");
+				} else {
+					// check if the threshold has been reached
+					unsatisfiedDemands++;
+					if((double)unsatisfiedDemands/orderedDemands.size()>0.01)
+					{
+						throw new Net2PlanException("BE demands drop larger than 0.01");
+					}
+				}
+			}
+			else
+			{
+				List<Link> IPPath = new ArrayList<>();
+				for (int ind = 0; ind < bestPath.size(); ind++) {
+					List<Link> subpath = bestPath.get(ind);
+					Modulation modulation = bestPathModulations.get(ind);
+					IPLink ipLink = null;
+					boolean ipToAdd=true;
+					//check for an existing ip link with spare capacity
+					for(IPLink link: mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(),subpath.get(subpath.size()-1).getDestinationNode())))
+					{
+						if(link.getSpareCapacity()>=ipDemand.getOfferedTraffic())
+						{
+							ipToAdd = false;
+							ipLink = link;
+							IPPath.add(link.getN2PLink());
+							ipLink.addDemand(ipDemand);
+							break;
+						}
+					}
+					// if no ip link is available, another is created
+					if(ipToAdd) {
+						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
+						ipLink = new IPLink(subpath, slotid, modulation);
+						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
+						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
+						ipLink.setN2PLink(n2pIPlink);
+						ipLink.addDemand(ipDemand);
 						IPPath.add(n2pIPlink);
 						final double occupiedBandwidth = ipLink.getModulation().getChannelSpacing();
 						netPlan.addRoute(newDemand, occupiedBandwidth, occupiedBandwidth, ipLink.getPath(), null);
-						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, RegeneratorOccupancy);
+						List<IPLink> ipList = mapIPLinks.get(Pair.of(ipLink.getStartNode(),ipLink.getEndNode()));
+						if(ipList == null)
+						{
+							mapIPLinks.put(Pair.of(ipLink.getStartNode(),ipLink.getEndNode()),new ArrayList<>(Collections.singletonList(ipLink)));
+						}
+						else
+						{
+							ipList.add(ipLink);
+						}
+						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, null);
 						if (transponders.get("CORE").getModulations().contains(modulation)) {
 							totalCost += transponders.get("CORE").getCost() * 2;
 						} else {
 							totalCost += transponders.get("METRO").getCost() * 2;
 						}
 					}
-					netPlan.addRoute(ipDemand, 100, 100, IPPath, null);
-					break;
 				}
-			}
-
-			if (!atLeastOnePath) {
-				// if the demand Priority QoS, then return a message
-				if (Objects.equals(ipDemand.getQosType(), "Priority")) {
-					return "The demand from " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName() + '\n' +
-							"has not been satisfied due to insufficient resources (Priority) ";
-				} else {
-					// check if the threshold has been reached
-					unsatisfiedDemands++;
-					if((double)unsatisfiedDemands/orderedDemands.size()>0.01)
-					{
-						return "BE demands drop larger than 0.01";
-					}
-				}
+				netPlan.addRoute(ipDemand, ipDemand.getOfferedTraffic(), ipDemand.getOfferedTraffic(), IPPath, null);
 			}
 		}
-
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
@@ -435,15 +509,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<String> tags = new LinkedList<>( path.get(0).getTags());
 		tags.retainAll(Arrays.asList("METRO", "CORE"));
 		List<Link> currentSubPath = new ArrayList<>();
-		System.out.println("path size " +path.size());
 		for (Link link : path) {
 
 			List<String> tags2 = new LinkedList<>(link.getTags());
 			tags2.retainAll(Arrays.asList("METRO", "CORE"));
-			System.out.println("tag:" +tags.toString());
-			System.out.println("tag2:" +tags2.toString());
 			tags.retainAll(tags2);
-			System.out.println("tag:" +tags.toString());
 			if(tags.isEmpty())
 			{
 				subPaths.add(currentSubPath);
