@@ -350,7 +350,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		}
 
 
-		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
+		String outMessage = "Total cost: " + totalCost + ". Num lps " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
 		return "Ok! " + outMessage;
 	}
@@ -475,8 +475,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<Modulation> modulations = transponder.getModulations();
 		modulations.sort(Comparator.comparingDouble(Modulation::getSpectralEfficiency));
 		for(Modulation modulation: modulations) {
-			int[] regenerators = WDMUtils.computeRegeneratorPositions(path,modulation.getReach());
-
+			int[] regenerators;
+			try {
+				regenerators = WDMUtils.computeRegeneratorPositions(path, modulation.getReach());
+			} catch (Net2PlanException exception) {
+				continue;
+			}
 			if(Arrays.stream(regenerators).sum()<=Arrays.stream(best).sum())
 			{
 				best = regenerators;
