@@ -117,8 +117,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
 	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 40 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
-	//private InputParameter transponderTypesInfo = new InputParameter ("transponderTypesInfo", "10 1 1 600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
-
+	// InputParameter to use a single type of transponder in the entire network
+	private InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", (boolean) false , "If true, a single transponder type is used in the entire network");
+	// InputParameter to define the type of transponder to use in case of singleTransponderForAll = true
+	private InputParameter singleTransponderType = new InputParameter ("singleTransponderType", (boolean) true , "Transponder type to use in case of singleTransponderForAll = true, if true LR is used, if false ZR+ is used");
 	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the IP layer (-1 means default layer)");
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
@@ -126,7 +128,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private NetPlan netPlan;
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
 	private NetworkLayer wdmLayer, ipLayer;
-	//private WDMUtils.TransponderTypesInfo transponderInfo;
 	private Map<String,Transponder> transponders = new HashMap<>();
 	private int NodeNumber, LinkNumberWDM, DemandsNumberIP, SlotPerFiber, TransponderNumber;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
@@ -153,7 +154,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			this.netPlan.setLinkCapacityUnitsName("Frequency slots");
 			this.ipLayer = netPlan.addLayer("IP", "IP layer", "Gbps", "Gbps", null, null);
 			for (Demand wdmDemand : netPlan.getDemands(wdmLayer)) {
-				//Map <String,String> attrib= new TreeMap<>(wdmDemand.getAttributes());
 				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode(), wdmDemand.getOfferedTraffic(), RoutingType.SOURCE_ROUTING, wdmDemand.getAttributes(), ipLayer);
 			}
 		} else {
@@ -178,11 +178,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		initializeTransponders();
 
-		/*
-		this.transponderInfo = new WDMUtils.TransponderTypesInfo(transponderTypesInfo.getString());
-		this.TransponderNumber = transponderInfo.getNumTypes();
-		*/
-
 		/* Remove all routes in current netPlan object. Initialize link capacities and attributes, and demand offered traffic */
 		/* WDM and IP layer are in source routing type */
 		netPlan.removeAllLinks(ipLayer);
@@ -198,8 +193,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		this.cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer), k.getInt(), -1, -1, maxPropagationDelayMs.getDouble(), -1, -1, -1, null, wdmLayer);
 
 		/* Compute the CPL, adding the routes */
-		/* 1+1 case: as many routes as 1+1 valid pairs (then, the same sequence of links can be in more than one Route).  */
-		/* rest of the cases: each sequence of links appears at most once */
 		Map<Link, Double> linkLengthMap = new HashMap<Link, Double>();
 		for (Link e : netPlan.getLinks(wdmLayer)) linkLengthMap.put(e, e.getLengthInKm());
 		final int maximumNumberOfPaths = TransponderNumber * k.getInt() * DemandsNumberIP;
@@ -249,14 +242,35 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 
 			for (List<Link> singlePath : cpl.get(nodePair)) {
-				//path -> list(subpath)
-				List<List<Link>> subpathsList = calculateSubPath(singlePath);
+
+				List<List<Link>> subpathsList;
+
+				// if singleTransponderForAll is false, then the path is split in subpaths, each one with a different transponder
+				if (!singleTransponderForAll.getBoolean()){
+					//path -> list(subpath)
+					subpathsList = calculateSubPath(singlePath);
+				} else {
+					//path -> list(path)
+					subpathsList = new ArrayList<>();
+					subpathsList.add(singlePath);
+				}
+
 				List<Modulation> modulationsList = new ArrayList<>();
 				for (int ind = 0; ind < subpathsList.size(); ind++) {
 					List<Link> subpath = subpathsList.get(ind);
 
 					// If subpath length is longer than the maximum reach of the transponder -> split the subpath in shorter subpaths
-					String tag = subpath.get(0).getTags().first(); // "METRO" or "CORE"
+
+					String tag;
+					if (!singleTransponderForAll.getBoolean()) {
+						tag = subpath.get(0).getTags().first(); // "METRO" or "CORE"
+					} else {
+						if (singleTransponderType.getBoolean()) {
+							tag = "CORE"; // Long Reach is used in the entire network
+						} else {
+							tag = "METRO"; // ZR+ is used in the entire network
+						}
+					}
 					if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
 						List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(tag));
 						int index = subpathsList.indexOf(subpath);
@@ -269,9 +283,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					modulationsList.add(bestModulation);
 					System.out.println("Subpath " + subpath.get(0).getOriginNode().getName() + " " + subpath.get(subpath.size() - 1).getDestinationNode().getName());
 				}
-				// guarda se ci sono ip link liberi
 
-				//non c'è nessun link IP (un link ip per ogni demand)
 				boolean successInFindingPath = true;
 
 				// check if the entire path has available resources
@@ -301,7 +313,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						//create IPLink
 						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
 						IPLink ipLink = new IPLink(subpath, slotid, modulation);
-						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getDatarate(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
+						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
 						//final Route lp = WDMUtils.addLightpath(newDemand, ipLink.getRsa(), ipLink.getModulation().getDatarate());
 						//final Link n2pIPlink = newDemand.coupleToNewLinkCreated(ipLayer);
 						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
@@ -415,9 +427,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 	/* --- ADDED FUNCTIONS --- */
 	/*
-	* calculateSubPath method
-	* Split the path into subpaths each one belonging to a single network category (METRO and CORE)
-	*/
+	 * calculateSubPath method
+	 * Split the path into subpaths each one belonging to a single network category (METRO and CORE)
+	 */
 	private List<List<Link>> calculateSubPath(List<Link> path) {
 		List<List<Link>> subPaths = new ArrayList<>();
 		List<String> tags = new LinkedList<>( path.get(0).getTags());
