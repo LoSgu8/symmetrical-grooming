@@ -1,4 +1,3 @@
-import cern.colt.matrix.tint.IntMatrix2D;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -12,13 +11,14 @@ public class IPLink {
     private final Modulation modulation;
     private final List<Demand> demands;
     private double spareCapacity;
+    private Link N2PLink;
 
 
     public IPLink(List<Link> path, int slotid, Modulation modulation) {
         this.rsa = new WDMUtils.RSA(path, slotid, modulation.getChannelSpacing());
         this.modulation = modulation;
         this.spareCapacity = modulation.getDatarate();
-        this.demands = new ArrayList<>((int)spareCapacity/100);
+        this.demands = new ArrayList<>();
     }
 
     public void addDemand(Demand demand) {
@@ -53,4 +53,13 @@ public class IPLink {
     public double getSpareCapacity() {
         return spareCapacity;
     }
+
+    public Link getN2PLink() {
+        return N2PLink;
+    }
+
+    public void setN2PLink(Link n2PLink) {
+        N2PLink = n2PLink;
+    }
+
 }
