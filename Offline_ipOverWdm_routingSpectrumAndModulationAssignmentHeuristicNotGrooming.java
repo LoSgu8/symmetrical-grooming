@@ -308,7 +308,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 					String tag;
 					if (!singleTransponderForAll.getBoolean()) {
-						tag = subpath.get(0).getTags().first(); // "METRO" or "CORE"
+						Set<String> tags = subpath.get(0).getTags();
+						tags.retainAll(Arrays.asList("METRO","CORE"));
+						tag = new ArrayList<>(tags).get(0); // "METRO" or "CORE"
 					} else {
 						if (singleTransponderType.getBoolean()) {
 							tag = "CORE"; // Long Reach is used in the entire network
