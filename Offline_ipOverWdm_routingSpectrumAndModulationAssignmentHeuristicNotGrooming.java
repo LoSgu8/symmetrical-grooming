@@ -146,6 +146,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
 	private InputParameter NumberOfDemands = new InputParameter("NumberOfDemands", 350, "Number of demands to be generated");
+	private InputParameter resultPath = new InputParameter("resultPath", ".", "Path of the folder for the ruslt file");
 	private NetPlan netPlan;
 	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
 	private NetworkLayer wdmLayer, ipLayer;
@@ -740,7 +741,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				// send DOM to file
 				tr.transform(new DOMSource(dom),
-						new StreamResult(Files.newOutputStream(Paths.get("simulationOutputP7.xml"))));
+						new StreamResult(Files.newOutputStream(Paths.get(resultPath.getString(),"simulationOutputP7.xml"))));
 
 			} catch (TransformerException | IOException te) {
 				System.out.println(te.getMessage());
