@@ -36,6 +36,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+// Main class
+
+
+
 /**
  * Algorithm based on an heuristic solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, 
  * in flexi (elastic) or fixed grid optical WDM networks, with or without fault tolerance and/or latency requisites.
@@ -647,13 +651,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			;
 
 			for(int island=1;island<10; island++){
-				List<Node> IslandNodes = new ArrayList<>(netPlan.getTaggedNodes("Island"+island));
+				List<Link> IslandLinks = new ArrayList<>(netPlan.getTaggedLinks("Island"+island));
 
 				int islandtransponder = 0;
 
-				for(Node node:IslandNodes){
-					islandtransponder += Integer.parseInt(node.getAttribute("ZR"));
-					islandtransponder += Integer.parseInt(node.getAttribute("LR"));
+				for(Link link:IslandLinks){
+
+					islandtransponder += Integer.parseInt(link.getAttribute("ZR"));
+					islandtransponder += Integer.parseInt(link.getAttribute("LR"));
 				}
 
 				e = dom.createElement("Transponder_Island"+island);
@@ -691,6 +696,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
 		}
 	}
+
+
+
 }
 
 /*
