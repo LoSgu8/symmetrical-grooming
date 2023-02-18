@@ -641,6 +641,45 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 			Element rootEle = dom.createElement("RESULT");
 
+			// crate the DATA ELEMENT
+			Element data = dom.createElement("DATA");
+			//number of demands
+			e = dom.createElement("demands");
+			e.appendChild(dom.createTextNode(Integer.toString(demandNumber)));
+			data.appendChild(e);
+			//Qos demands
+			int pr = 0;
+			int be = 0;
+			for(Demand demand: netPlan.getDemands(ipLayer))
+			{
+				if(demand.getQosType().equals("PRIORITY")) {
+					pr++;
+				}
+				else {
+					be++;
+				}
+			}
+			e = dom.createElement("priority");
+			e.appendChild(dom.createTextNode(Integer.toString(pr)));
+			data.appendChild(e);
+			e = dom.createElement("best_effort");
+			e.appendChild(dom.createTextNode(Integer.toString(be)));
+			data.appendChild(e);
+
+			// core metro relation
+			e = dom.createElement("priority_percentage");
+			e.appendChild(dom.createTextNode(Double.toString(percentageOfCoreTraffic.getDouble())));
+			data.appendChild(e);
+
+			//
+			e = dom.createElement("single_transponder_for_all");
+			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
+			data.appendChild(e);
+
+			e = dom.createElement("single_transponder_type");
+			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
+			data.appendChild(e);
+
 			// create the COST ELEMENT
 			Element costEle = dom.createElement("COST");
 
