@@ -682,8 +682,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				tr.setOutputProperty(OutputKeys.INDENT, "yes");
 				tr.setOutputProperty(OutputKeys.METHOD, "xml");
 				tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-				tr.setOutputProperty(OutputKeys.STANDALONE, "yes");
-				//tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
 				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
 				// send DOM to file
