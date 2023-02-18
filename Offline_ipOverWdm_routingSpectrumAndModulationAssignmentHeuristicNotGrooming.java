@@ -628,6 +628,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
 			data.appendChild(e);
 
+			rootEle.appendChild(data);
+
 			// create the COST ELEMENT
 			Element costEle = dom.createElement("COST");
 
@@ -649,8 +651,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			//per island:
 
 			Element islandElement = dom.createElement("ISLAND_DATA");
-
-			;
 
 			for(int island=1;island<10; island++){
 				List<Link> IslandLinks = new ArrayList<>(netPlan.getTaggedLinks("Island"+island));
