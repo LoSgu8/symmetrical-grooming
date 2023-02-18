@@ -34,6 +34,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 // Main class
@@ -693,17 +695,16 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				tr.setOutputProperty(OutputKeys.INDENT, "yes");
 				tr.setOutputProperty(OutputKeys.METHOD, "xml");
 				tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+				tr.setOutputProperty(OutputKeys.STANDALONE, "yes");
 				//tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
 				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
 				// send DOM to file
 				tr.transform(new DOMSource(dom),
-						new StreamResult(new FileOutputStream("simulationOutputP7.xml")));
+						new StreamResult(Files.newOutputStream(Paths.get("simulationOutputP7.xml"))));
 
-			} catch (TransformerException te) {
+			} catch (TransformerException | IOException te) {
 				System.out.println(te.getMessage());
-			} catch (IOException ioe) {
-				System.out.println(ioe.getMessage());
 			}
 		} catch (ParserConfigurationException pce) {
 			System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
