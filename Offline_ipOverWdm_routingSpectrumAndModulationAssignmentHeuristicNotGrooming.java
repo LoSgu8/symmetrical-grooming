@@ -691,7 +691,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 										"simulationOutput.xml"))));
 
 			} catch (TransformerException | IOException te) {
-				System.out.println(te.getMessage());
+				te.printStackTrace();
 			}
 		} catch (ParserConfigurationException pce) {
 			System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
