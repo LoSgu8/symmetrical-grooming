@@ -20,7 +20,20 @@ import com.net2plan.libraries.WDMUtils;
 
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -116,7 +129,7 @@ import java.util.*;
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
-	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 40 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
+	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	// InputParameter to use a single type of transponder in the entire network
 	private InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", (boolean) false , "If true, a single transponder type is used in the entire network");
 	// InputParameter to define the type of transponder to use in case of singleTransponderForAll = true
@@ -137,6 +150,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 
 	private static int maxReach = -1;
+
+	private int totalZR = 0;
+
+	private int totalLR = 0;
+
+	private int totalCost = 0;
 
 	private int demandNumber;
 
@@ -206,7 +225,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<Demand> ipDemand_p = new ArrayList<Demand>(maximumNumberOfPaths);
 		Map<Demand, List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand, List<Integer>>();
 		Map<Pair<Node, Node>, List<IPLink>> mapIPLinks = new HashMap<>();
-		int totalCost = 0;
+
 		int unsatisfiedDemands = 0;
 
 		List<Demand> orderedDemands;
@@ -347,6 +366,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						{
 							if (transponders.get("CORE").getModulations().contains(modulation)) {
 								cost += transponders.get("CORE").getCost() * 2;
+
 							} else {
 								cost += transponders.get("METRO").getCost() * 2;
 							}
@@ -422,10 +442,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 							totalCost += transponders.get("CORE").getCost() * 2;
                             ipLink.getStartNode().setAttribute("LR",Integer.parseInt(ipLink.getStartNode().getAttribute("LR"))+1);
                             ipLink.getEndNode().setAttribute("LR",Integer.parseInt(ipLink.getEndNode().getAttribute("LR"))+1);
+							totalLR += 2;
 						} else {
 							totalCost += transponders.get("METRO").getCost() * 2;
                             ipLink.getStartNode().setAttribute("ZR",Integer.parseInt(ipLink.getStartNode().getAttribute("ZR"))+1);
                             ipLink.getEndNode().setAttribute("ZR",Integer.parseInt(ipLink.getEndNode().getAttribute("ZR"))+1);
+							totalZR += 2;
 						}
 					}
 				}
@@ -433,6 +455,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 		}
 
+		saveToXML("sym7results.xml");
 		String outMessage = "Total cost: " + totalCost + ". Num lps " + netPlan.getNumberOfRoutes(wdmLayer);
 		//System.out.println (outMessage);
 		return "Ok! " + outMessage;
@@ -581,6 +604,92 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		}
 		subPaths.add(currentSubPath);
 		return subPaths;
+	}
+
+	public void saveToXML(String xml) {
+		Document dom;
+		Element e = null;
+
+
+
+		// instance of a DocumentBuilderFactory
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		try {
+			// use factory to get an instance of document builder
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			// create instance of DOM
+			dom = db.newDocument();
+
+			Element rootEle = dom.createElement("RESULT");
+
+			// create the COST ELEMENT
+			Element costEle = dom.createElement("COST");
+
+			// create data elements and place them under root
+			e = dom.createElement("number_ZR");
+			e.appendChild(dom.createTextNode(Integer.toString(totalZR)));
+			costEle.appendChild(e);
+
+			e = dom.createElement("number_LR");
+			e.appendChild(dom.createTextNode(Integer.toString(totalLR)));
+			costEle.appendChild(e);
+
+			e = dom.createElement("total_Cost");
+			e.appendChild(dom.createTextNode(Integer.toString(totalCost)));
+			costEle.appendChild(e);
+
+			rootEle.appendChild(costEle);
+
+			//per island:
+
+			Element islandElement = dom.createElement("ISLAND_DATA");
+
+			;
+
+			for(int island=1;island<10; island++){
+				List<Node> IslandNodes = new ArrayList<>(netPlan.getTaggedNodes("Island"+island));
+
+				int islandtransponder = 0;
+
+				for(Node node:IslandNodes){
+					islandtransponder += Integer.parseInt(node.getAttribute("ZR"));
+					islandtransponder += Integer.parseInt(node.getAttribute("LR"));
+				}
+
+				e = dom.createElement("Transponder_Island"+island);
+				e.appendChild(dom.createTextNode(Integer.toString(islandtransponder)));
+				islandElement.appendChild(e);
+
+			}
+
+			rootEle.appendChild(islandElement);
+
+
+			dom.appendChild(rootEle);
+
+
+
+
+			try {
+				Transformer tr = TransformerFactory.newInstance().newTransformer();
+				tr.setOutputProperty(OutputKeys.INDENT, "yes");
+				tr.setOutputProperty(OutputKeys.METHOD, "xml");
+				tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+				//tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
+				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+				// send DOM to file
+				tr.transform(new DOMSource(dom),
+						new StreamResult(new FileOutputStream("simulationOutputP7.xml")));
+
+			} catch (TransformerException te) {
+				System.out.println(te.getMessage());
+			} catch (IOException ioe) {
+				System.out.println(ioe.getMessage());
+			}
+		} catch (ParserConfigurationException pce) {
+			System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
+		}
 	}
 }
 
