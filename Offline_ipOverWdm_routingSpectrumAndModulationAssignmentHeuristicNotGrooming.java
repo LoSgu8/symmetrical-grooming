@@ -151,14 +151,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private Map<String,Transponder> transponders = new HashMap<>();
 	private int NodeNumber, LinkNumberWDM, DemandsNumberIP, SlotPerFiber;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
-
 	private int totalZR = 0;
-
 	private int totalLR = 0;
-
 	private int totalCost = 0;
-
 	private int demandNumber;
+	private static final String QOS_TYPE_PRIORITY = "PRIORITY";
+	private static final String QOS_TYPE_BEST_EFFORT = "BEST_EFFORT";
+	private static final String SUBREGION_TYPE_CORE = "CORE";
+	private static final String SUBREGION_TYPE_METRO = "METRO";
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) {
@@ -249,9 +249,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		orderedDemands.sort((d1, d2) -> {
 			if (Objects.equals(d1.getQosType(), d2.getQosType()))
 				return 0;
-			if (Objects.equals(d1.getQosType(), "PRIORITY"))
+			if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
 				return -1;
-			if (Objects.equals(d2.getQosType(), "BEST_EFFORT"))
+			if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
 				return 1;
 			return 0;
 		});
@@ -288,13 +288,13 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					String tag;
 					if (!singleTransponderForAll.getBoolean()) {
 						List<String> tags = new ArrayList<>(subpath.get(0).getTags());
-						tags.retainAll(Arrays.asList("METRO","CORE"));
+						tags.retainAll(Arrays.asList(SUBREGION_TYPE_CORE,SUBREGION_TYPE_METRO));
 						tag = tags.get(0); // "METRO" or "CORE"
 					} else {
 						if (singleTransponderType.getBoolean()) {
-							tag = "CORE"; // Long Reach is used in the entire network
+							tag = SUBREGION_TYPE_CORE; // Long Reach is used in the entire network
 						} else {
-							tag = "METRO"; // ZR+ is used in the entire network
+							tag = SUBREGION_TYPE_METRO; // ZR+ is used in the entire network
 						}
 					}
 					if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
@@ -354,11 +354,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						}
 						if(ipToAdd)
 						{
-							if (transponders.get("CORE").getModulations().contains(modulation)) {
-								cost += transponders.get("CORE").getCost() * 2;
+							if (transponders.get(SUBREGION_TYPE_CORE).getModulations().contains(modulation)) {
+								cost += transponders.get(SUBREGION_TYPE_CORE).getCost() * 2;
 
 							} else {
-								cost += transponders.get("METRO").getCost() * 2;
+								cost += transponders.get(SUBREGION_TYPE_METRO).getCost() * 2;
 							}
 						}
 					}
@@ -375,7 +375,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			//if no path has been found, handle the possible error
 			if (!atLeastOnePath) {
 				// if the demand Priority QoS, then return a message
-				if (Objects.equals(ipDemand.getQosType(), "PRIORITY")) {
+				if (Objects.equals(ipDemand.getQosType(), QOS_TYPE_PRIORITY)) {
 					throw new Net2PlanException("The demand from " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName() + '\n' +
 							"has not been satisfied due to insufficient resources (Priority) ");
 				} else {
@@ -429,15 +429,15 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 							ipList.add(ipLink);
 						}
 						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, null);
-						if (transponders.get("CORE").getModulations().contains(modulation)) {
-							totalCost += transponders.get("CORE").getCost() * 2;
+						if (transponders.get(SUBREGION_TYPE_CORE).getModulations().contains(modulation)) {
+							totalCost += transponders.get(SUBREGION_TYPE_CORE).getCost() * 2;
                             ipLink.getStartNode().setAttribute("LR",Integer.parseInt(ipLink.getStartNode().getAttribute("LR"))+1);
                             ipLink.getEndNode().setAttribute("LR",Integer.parseInt(ipLink.getEndNode().getAttribute("LR"))+1);
 							ipLink.getPath().get(0).setAttribute("LR",Integer.parseInt(ipLink.getPath().get(0).getAttribute("LR"))+1);
 							ipLink.getPath().get(ipLink.getPath().size()-1).setAttribute("LR",Integer.parseInt(ipLink.getPath().get(ipLink.getPath().size()-1).getAttribute("LR"))+1);
 							totalLR += 2;
 						} else {
-							totalCost += transponders.get("METRO").getCost() * 2;
+							totalCost += transponders.get(SUBREGION_TYPE_METRO).getCost() * 2;
                             ipLink.getStartNode().setAttribute("ZR",Integer.parseInt(ipLink.getStartNode().getAttribute("ZR"))+1);
                             ipLink.getEndNode().setAttribute("ZR",Integer.parseInt(ipLink.getEndNode().getAttribute("ZR"))+1);
 							ipLink.getPath().get(0).setAttribute("ZR",Integer.parseInt(ipLink.getPath().get(0).getAttribute("ZR"))+1);
@@ -480,7 +480,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		zrmods.add(new Modulation("QPSK", 200, 75, 3000));
 		zrmods.add(new Modulation("QPSK", 100, 75, 3000));
 
-		this.transponders.put("METRO", new Transponder("ZR+ OEO", 0.5, zrmods));
+		this.transponders.put(SUBREGION_TYPE_METRO, new Transponder("ZR+ OEO", 0.5, zrmods));
 
 		/* Long reach OEO Transponder definition */
 		List<Modulation> lrmods = new ArrayList<>(9);
@@ -494,7 +494,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		lrmods.add(new Modulation("16 QAM", 200, 50, 900));
 		lrmods.add(new Modulation("QPSK", 100, 50, 3000));
 
-		this.transponders.put("CORE", new Transponder("Long Reach OEO", 1, lrmods));
+		this.transponders.put(SUBREGION_TYPE_CORE, new Transponder("Long Reach OEO", 1, lrmods));
 	}
 
 
@@ -506,19 +506,19 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private List<List<Link>> calculateSubPath(List<Link> path) {
 		List<List<Link>> subPaths = new ArrayList<>();
 		List<String> tags = new LinkedList<>( path.get(0).getTags());
-		tags.retainAll(Arrays.asList("METRO", "CORE"));
+		tags.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 		List<Link> currentSubPath = new ArrayList<>();
 		for (Link link : path) {
 
 			List<String> tags2 = new LinkedList<>(link.getTags());
-			tags2.retainAll(Arrays.asList("METRO", "CORE"));
+			tags2.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 			tags.retainAll(tags2);
 			if(tags.isEmpty())
 			{
 				subPaths.add(currentSubPath);
 				currentSubPath = new LinkedList<>();
 				tags = new LinkedList<>(link.getTags());
-				tags.retainAll(Arrays.asList("METRO", "CORE"));
+				tags.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 			}
 			currentSubPath.add(link);
 		}
@@ -600,7 +600,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			int be = 0;
 			for(Demand demand: netPlan.getDemands(ipLayer))
 			{
-				if(demand.getQosType().equals("PRIORITY")) {
+				if(demand.getQosType().equals(QOS_TYPE_PRIORITY)) {
 					pr++;
 				}
 				else {
