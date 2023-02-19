@@ -654,7 +654,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 			for(int island=1;island<10; island++){
 				List<Link> IslandLinks = new ArrayList<>(netPlan.getTaggedLinks("Island"+island));
-
+				//if(IslandLinks.isEmpty()) throw new Net2PlanException("no link for island " + island);
 				int islandTransponder = 0;
 
 				for(Link link:IslandLinks){

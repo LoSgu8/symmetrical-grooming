@@ -68,18 +68,22 @@ while(not all_iterations_failed):
     output_folder_demand = output_folder + "/demands" + str(num_demands)
     if not os.path.exists(output_folder_demand):
         os.makedirs(output_folder_demand)
-    print("folder: "+ output_folder_demand)
+    #print("folder: "+ output_folder_demand)
     for iteration in range(num_iterations):
         print("Running " + str(num_demands) + " demands, iteration " + str(iteration))
         result = subprocess.run(["/usr/lib/jvm/java-8-openjdk-amd64/bin/java", "-jar", net2plan_cli_path, "--mode", "net-design", "--input-file", topology_file, "--output-file", "output.n2p", "--class-file", class_file, "--class-name", class_name, "--alg-param", "NumberOfDemands="+str(num_demands), "--alg-param", "k=5", "--alg-param", "maxPropagationDelayMs=-1.0", "--alg-param", "numFrequencySlotsPerFiber=4950", "--alg-param", "percentageOfCoreTraffic="+str(percentage_core), "--alg-param", "resultPath="+output_folder_demand, "--alg-param", "singleTransponderForAll="+str(singleTransponder).lower(), "--alg-param", "singleTransponderType=true"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # if the execution finished successfully, then at least one iteration was successful
+
         print(result.stdout.decode("utf-8"))
+
         if ("Algorithm finished successfully") in result.stdout.decode("utf-8"):
             print("\tExecution successful")
             all_iterations_failed = False
         else:
             print("\tExecution failed")
-    num_demands += increment_num_demands
+    if not all_iterations_failed:
+        num_demands += increment_num_demands
+
 
 # print at which number of demands the execution stopped
 print("Execution stopped at " + str(num_demands) + " demands")
