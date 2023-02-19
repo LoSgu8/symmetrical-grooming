@@ -141,7 +141,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		// Order netPlan.getDemands(ipLayer) according
 		// to qosType (priority first, best-effort last)
-		orderedDemands = new LinkedList<>(netPlan.getDemands(ipLayer));
+		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
 		orderedDemands.sort((d1, d2) -> {
 			if (Objects.equals(d1.getQosType(), d2.getQosType()))
 				return 0;
@@ -171,7 +171,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					subpathsList = calculateSubPath(singlePath);
 				} else {
 					//path -> list(path)
-					subpathsList = new LinkedList<>();
+					subpathsList = new ArrayList<>();
 					subpathsList.add(singlePath);
 				}
 
@@ -400,20 +400,20 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	 * Split the path into subpaths each one belonging to a single network category (METRO and CORE)
 	 */
 	private List<List<Link>> calculateSubPath(List<Link> path) {
-		List<List<Link>> subPaths = new LinkedList<>();
-		List<String> tags = new LinkedList<>( path.get(0).getTags());
+		List<List<Link>> subPaths = new ArrayList<>();
+		List<String> tags = new ArrayList<>(path.get(0).getTags());
 		tags.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 		List<Link> currentSubPath = new ArrayList<>();
 		for (Link link : path) {
 
-			List<String> tags2 = new LinkedList<>(link.getTags());
+			List<String> tags2 = new ArrayList<>(link.getTags());
 			tags2.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 			tags.retainAll(tags2);
 			if(tags.isEmpty())
 			{
 				subPaths.add(currentSubPath);
-				currentSubPath = new LinkedList<>();
-				tags = new LinkedList<>(link.getTags());
+				currentSubPath = new ArrayList<>();
+				tags = new ArrayList<>(link.getTags());
 				tags.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 			}
 			currentSubPath.add(link);
@@ -483,14 +483,15 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			// create instance of DOM
 			dom = db.newDocument();
 
-			Element rootEle = dom.createElement("RESULT");
+			Element rootElem = dom.createElement("root");
+			Element dataElem = dom.createElement("data");
 
 			// crate the DATA ELEMENT
 			//Element data = dom.createElement("DATA");
 			//number of demands
 			e = dom.createElement("demands");
 			e.appendChild(dom.createTextNode(Integer.toString(demandNumber)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 			//Qos demands
 			int pr = 0;
 			int be = 0;
@@ -505,26 +506,26 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 			e = dom.createElement("priority");
 			e.appendChild(dom.createTextNode(Integer.toString(pr)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 			e = dom.createElement("best_effort");
 			e.appendChild(dom.createTextNode(Integer.toString(be)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
 			// core metro relation
 			e = dom.createElement("priority_percentage");
 			e.appendChild(dom.createTextNode(Double.toString(percentageOfCoreTraffic.getDouble())));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
 			//
 			e = dom.createElement("single_transponder_for_all");
 			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
 			e = dom.createElement("single_transponder_type");
 			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
-			//rootEle.appendChild(data);
+			//dataElem.appendChild(data);
 
 			// create the COST ELEMENT
 			//Element costEle = dom.createElement("COST");
@@ -532,17 +533,17 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			// create data elements and place them under root
 			e = dom.createElement("number_ZR");
 			e.appendChild(dom.createTextNode(Integer.toString(totalZR)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
 			e = dom.createElement("number_LR");
 			e.appendChild(dom.createTextNode(Integer.toString(totalLR)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
 			e = dom.createElement("total_Cost");
 			e.appendChild(dom.createTextNode(Integer.toString(totalCost)));
-			rootEle.appendChild(e);
+			dataElem.appendChild(e);
 
-			//rootEle.appendChild(costEle);
+			//dataElem.appendChild(costEle);
 
 			//per island:
 
@@ -561,14 +562,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				e = dom.createElement("Transponder_Island"+island);
 				e.appendChild(dom.createTextNode(Integer.toString(islandTransponder)));
-				rootEle.appendChild(e);
+				dataElem.appendChild(e);
 
 			}
 
-			//rootEle.appendChild(islandElement);
+			//dataElem.appendChild(islandElement);
 
-
-			dom.appendChild(rootEle);
+			rootElem.appendChild(dataElem);
+			dom.appendChild(rootElem);
 
 
 
