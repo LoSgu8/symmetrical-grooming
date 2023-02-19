@@ -1,25 +1,12 @@
 
-/*******************************************************************************
- * Copyright (c) 2017 Pablo Pavon Marino and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the 2-clause BSD License 
- * which accompanies this distribution, and is available at
- * https://opensource.org/licenses/BSD-2-Clause
- *
- * Contributors:
- *     Pablo Pavon Marino and others - initial API and implementation
- *******************************************************************************/
-
-
-import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.WDMUtils;
-
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.*;
+import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -41,107 +28,17 @@ import java.util.*;
 // Main class
 
 
-
-/**
- * Algorithm based on an heuristic solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, 
- * in flexi (elastic) or fixed grid optical WDM networks, with or without fault tolerance and/or latency requisites.
- *
- * <p>The input design typically has two layers (IP and WDM layers), according to the typical conventions in {@link com.net2plan.libraries.WDMUtils WDMUtils}.
- * If the design has one single layer, it is first converted into a two-layer design: WDM layer taking the links (fibers) with no demands,
- * IP layer taking the traffic demands, without IP links. Any previous routes are removed.</p>
- * <p>The WDM layer is compatible with {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan
- * library usual assumptions:</p>
- * <ul>
- * <li>Each network node is assumed to be an Optical Add/Drop Multiplexer WDM node</li>
- * <li>Each network link at WDM layer is assumed to be an optical fiber.</li>
- * <li>The spectrum in the fibers is assumed to be composed of a number of frequency slots.
- * In fixed-grid network, each frequency slot would correspond to a wavelength channel.
- * In flexi-grid networks, it is just a frequency slot, and lightpaths can occupy more than one. In any case,
- * two lightpaths that use overlapping frequency slots cannot traverse the same fiber, since their signals would mix.</li>
- * <li>No traffic demands initially exist at the WDM layer. In this algorithms, each lightpath is associated to a WDM demand </li>
- * <li> Each traffic demand at the IP layer is a need to transmit an amount of Gbps between two nodes.
- * A demand traffic can be carried using one or more lightpaths.</li>
- * </ul>
- *
- * <p>Each lightpath (primary or backup) produced by the design is returned as a {@code Route} object.</p>
- *
- * <p>Each lightpath starts and ends in a transponder. The user is able to define a set of available transpoder types, so
- * the design can create lightpaths using any combination of them. The information user-defined per transponder is:</p>
- * <ul>
- * <li>Line rate in Gbps (typically 10, 40, 100 in fixed-grid cases, and other multiples in flexi-grid networks).</li>
- * <li>Cost</li>
- * <li>Number of frequency slots occupied (for a given line rate, this depends on the modulation the transponder uses)</li>
- * <li>Optical reach in km: Maximum allowed length in km of the lightpaths with this transponder.
- * Higher distances can be reached using signal regenerators.</li>
- * <li>Cost of a regenerator for this transponder. Regenerators can be placed at intermdiate nodes of the lightpath route,
- * regenerate its optical signal, and then permit extending its reach. We consider that regenerators cannot change the
- * frequency slots occupied by the lightpath (that is, they are not capable of wavelength conversion)</li>
- * </ul>
- *
- * <p>We assume that all the fibers use the same wavelength grid, composed of a user-defined number of frequency slots.
- * The user can also select a limit in the maximum propagation delay of a lightpath. </p>
- * <p>The output design consists in the set of lightpaths to establish, in the 1+1 case also with a 1+1 lightpath each.
- * Each lightpath is characterized by the transponder type used (which sets its line rate and number of occupied slots in the
- * traversed fibers), the particular set of contiguous frequency slots occupied, and the set of signal regeneration points (if any).
- * This information is stored in the {@code Route} object using the regular methods in WDMUTils,
- * and can be retrieved in the same form (e.g. by a report showing the WDM network information).
- * If a feasible solution is not found (one where all the demands are satisfied with the given constraints), a message is shown.</p>.
- *
- * <h2>Failure tolerance</h2>
- * <p>The user can choose among three possibilities for designing the network:</p>
- * <ul>
- * <li>No failure tolerant: The lightpaths established should be enough to carry the traffic of all the demands when no failure
- * occurs in the network, but any losses are accepted if the network suffers failures in links or nodes.</li>
- * <li>Tolerant to single-SRG (Shared Risk Group) failures with static lightpaths: All the traffic demands should be satisfied using
- * lightpaths, so that under any single-SRG failure (SRGs are taken from the input design), the surviving lightpaths are enough
- * to carry the 100% of the traffic. Note that lightpaths are static, in the sense that they are not rerouted when affected by a
- * failure (they just also fail), and the design should just overprovision the number of lightpaths to establish with that in mind.</li>
- * <li>1+1 SRG-disjoint protection: This is another form to provide single-SRG failure tolerance. Each lightpath is backed up by
- * a SRG-disjoint lightpath. The backup lightpath uses the same type of transponder
- * as the primary (and thus the same line rate, an occupies the same number of slots), its path is SRG-disjoint, and the particular
- * set of slots occupied can be different. </li>
- * </ul>
- * <h2>Use cases</h2>
- * <p>This algorithm is quite general, and fits a number of use cases designing WDM networks, for instance:</p>
- * <ul>
- * <li>Single line rate, fixed grid networks: Then, one single type of transponder will be available, which occupies one frequency slot</li>
- * <li>Mixed-Line Rate fixed-grid networks: In this case, several transponders can be available at different line rates and with different optical
- * reaches. However, all of them occupy one slot (one wavelength channel)</li>
- * <li>Single line rate, flexi-grid networks using varying-modulation transponders: Several transponders are available (or the same
- * transponder with varying configurations), all of them with the same line rate, but thanks to the different usable modulations
- * they can have different optical reaches and/or number of occupied slots.</li>
- * <li>Multiple line rate, flexi-grid networks using Bandwidth Variable Transponders: Here, it is possible to use different transponders
- * with different line rates, e.g. to reflect more sophisticated transponders which can have different configurations, varying its line rate,
- * optical reach, and number of occupied slots.</li>
- * <li>...</li>
- * </ul>
- * <h2>Some details of the algorithm</h2>
- * <p>The algorithm is based on a heuristic. Initially, at most {@code k} paths are selected for each demand and transponder type.
- * Then, in each iteration, the algorithm first orders the demands in descending order according to the traffic pending
- * to be carried (if single-SRG failure tolerance is chosen, this is the average among all the
- * states -no failure and single SRG failure). Then, all the transponder types and possible routes (or SRG-disjoint 1+1 pairs in the
- * 1+1 case) are attempted for that demand, using a first-fit approach for the slots. If an RSA is found for more than one
- * transponder and route, the one chosen is first, the one with best performance metric, and among them, the first transponder
- * according to the order in which the user put it in the input parameter, and among them the shortest one in km .
- * The performance metric used is the amount of extra traffic carried if the lightpath is established, divided by the lightpath cost,
- * summing the transponder cost, and the cost of the signal regenerators if any.</p>
- * <p>The details of the algorithm will be provided in a publication currently under elaboration.</p>
- *
- * @net2plan.keywords WDM
- * @net2plan.inputParameters
- * @author Pablo Pavon-Marino
- */
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
 	private final InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
-	private final InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
+	private final InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	// InputParameter to use a single type of transponder in the entire network
-	private final InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", (boolean) false , "If true, a single transponder type is used in the entire network");
+	private final InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", false , "If true, a single transponder type is used in the entire network");
 	// InputParameter to define the type of transponder to use in case of singleTransponderForAll = true
-	private final InputParameter singleTransponderType = new InputParameter ("singleTransponderType", (boolean) true , "Transponder type to use in case of singleTransponderForAll = true, if true LR is used, if false ZR+ is used");
+	private final InputParameter singleTransponderType = new InputParameter ("singleTransponderType", true , "Transponder type to use in case of singleTransponderForAll = true, if true LR is used, if false ZR+ is used");
 	// InputParameter to define the percentage of the total traffic generated by core nodes
-	private final InputParameter percentageOfCoreTraffic = new InputParameter ("percentageOfCoreTraffic", (double) 0.5 , "Percentage of the total traffic generated by core nodes" , 0 , true , 1 , true);
-	private final InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
+	private final InputParameter percentageOfCoreTraffic = new InputParameter ("percentageOfCoreTraffic", 0.5 , "Percentage of the total traffic generated by core nodes" , 0 , true , 1 , true);
+	private final InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", -1.0 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
 	private final InputParameter NumberOfDemands = new InputParameter("NumberOfDemands", 350, "Number of demands to be generated");
 	private final InputParameter resultPath = new InputParameter("resultPath", "result", "Path of the folder for the result file");
 	private NetPlan netPlan;
@@ -206,7 +103,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		/* Initialize the slot occupancy */
 		this.frequencySlot2FiberOccupancy_se = DoubleFactory2D.dense.make(SlotPerFiber, LinkNumberWDM);
-		DoubleMatrix1D regeneratorOccupancy = DoubleFactory1D.dense.make(NodeNumber);
 
 		/* Compute the candidate path list of possible paths */
 		this.cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer), k.getInt(), -1, -1, maxPropagationDelayMs.getDouble(), -1, -1, -1, null, wdmLayer);
@@ -258,14 +154,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		for (Demand ipDemand : orderedDemands) {
 
-			final Pair<Node, Node> nodePair = Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode());
+			//final Pair<Node, Node> nodePair = ;
 			boolean atLeastOnePath = false;
 			int bestPathCost = Integer.MAX_VALUE;
 			List<List<Link>> bestPath = null;
 			List<Modulation> bestPathModulations = null;
 
 
-			for (List<Link> singlePath : cpl.get(nodePair)) {
+			for (List<Link> singlePath : cpl.get(Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode()))) {
 
 				List<List<Link>> subpathsList;
 
@@ -275,7 +171,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					subpathsList = calculateSubPath(singlePath);
 				} else {
 					//path -> list(path)
-					subpathsList = new ArrayList<>();
+					subpathsList = new LinkedList<>();
 					subpathsList.add(singlePath);
 				}
 
@@ -504,7 +400,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	 * Split the path into subpaths each one belonging to a single network category (METRO and CORE)
 	 */
 	private List<List<Link>> calculateSubPath(List<Link> path) {
-		List<List<Link>> subPaths = new ArrayList<>();
+		List<List<Link>> subPaths = new LinkedList<>();
 		List<String> tags = new LinkedList<>( path.get(0).getTags());
 		tags.retainAll(Arrays.asList(SUBREGION_TYPE_METRO, SUBREGION_TYPE_CORE));
 		List<Link> currentSubPath = new ArrayList<>();
@@ -590,11 +486,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			Element rootEle = dom.createElement("RESULT");
 
 			// crate the DATA ELEMENT
-			Element data = dom.createElement("DATA");
+			//Element data = dom.createElement("DATA");
 			//number of demands
 			e = dom.createElement("demands");
 			e.appendChild(dom.createTextNode(Integer.toString(demandNumber)));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 			//Qos demands
 			int pr = 0;
 			int be = 0;
@@ -609,48 +505,48 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 			e = dom.createElement("priority");
 			e.appendChild(dom.createTextNode(Integer.toString(pr)));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 			e = dom.createElement("best_effort");
 			e.appendChild(dom.createTextNode(Integer.toString(be)));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 
 			// core metro relation
 			e = dom.createElement("priority_percentage");
 			e.appendChild(dom.createTextNode(Double.toString(percentageOfCoreTraffic.getDouble())));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 
 			//
 			e = dom.createElement("single_transponder_for_all");
 			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 
 			e = dom.createElement("single_transponder_type");
 			e.appendChild(dom.createTextNode(Boolean.toString(singleTransponderForAll.getBoolean())));
-			data.appendChild(e);
+			rootEle.appendChild(e);
 
-			rootEle.appendChild(data);
+			//rootEle.appendChild(data);
 
 			// create the COST ELEMENT
-			Element costEle = dom.createElement("COST");
+			//Element costEle = dom.createElement("COST");
 
 			// create data elements and place them under root
 			e = dom.createElement("number_ZR");
 			e.appendChild(dom.createTextNode(Integer.toString(totalZR)));
-			costEle.appendChild(e);
+			rootEle.appendChild(e);
 
 			e = dom.createElement("number_LR");
 			e.appendChild(dom.createTextNode(Integer.toString(totalLR)));
-			costEle.appendChild(e);
+			rootEle.appendChild(e);
 
 			e = dom.createElement("total_Cost");
 			e.appendChild(dom.createTextNode(Integer.toString(totalCost)));
-			costEle.appendChild(e);
+			rootEle.appendChild(e);
 
-			rootEle.appendChild(costEle);
+			//rootEle.appendChild(costEle);
 
 			//per island:
 
-			Element islandElement = dom.createElement("ISLAND_DATA");
+			//Element islandElement = dom.createElement("ISLAND_DATA");
 
 			for(int island=1;island<10; island++){
 				List<Link> IslandLinks = new ArrayList<>(netPlan.getTaggedLinks("Island"+island));
@@ -665,11 +561,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				e = dom.createElement("Transponder_Island"+island);
 				e.appendChild(dom.createTextNode(Integer.toString(islandTransponder)));
-				islandElement.appendChild(e);
+				rootEle.appendChild(e);
 
 			}
 
-			rootEle.appendChild(islandElement);
+			//rootEle.appendChild(islandElement);
 
 
 			dom.appendChild(rootEle);
