@@ -18,6 +18,9 @@ At each link is assigned a single tag "CORE" or "METRO" to describe the area of 
 ## Offline\_ipOverWdm\_routingSpectrumAndModulationAssignmentHeuristicNotGrooming.java
 
 All the demands are ordered according to their QoSType (priority first, best-effort last) and looped through them.
+
+In order to achieve better results in the single transponder case, demands can be satisfied from the shortest to the longest one, achieving higher levels of grooming.
+
 At each demand it is assigned the first available shortest path. It is always preferred the use of the modualtion having the best spectral efficiency and that requires the minimum number of regenerations.
 Whenever the path crosses different zones, the channel is regenerated in order to mantain different transponder in each zone.
 
