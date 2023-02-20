@@ -553,16 +553,30 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				List<Link> IslandLinks = new ArrayList<>(netPlan.getTaggedLinks("Island"+island));
 				//if(IslandLinks.isEmpty()) throw new Net2PlanException("no link for island " + island);
 				int islandTransponder = 0;
+				int island_ZR = 0;
+				int island_LR = 0;
 
 				for(Link link:IslandLinks){
 
-					islandTransponder += Integer.parseInt(link.getAttribute("ZR"));
-					islandTransponder += Integer.parseInt(link.getAttribute("LR"));
+					island_ZR += Integer.parseInt(link.getAttribute("ZR"));
+					island_LR += Integer.parseInt(link.getAttribute("LR"));
+
 				}
+
+				islandTransponder += island_ZR + island_LR;
 
 				e = dom.createElement("Transponder_Island"+island);
 				e.appendChild(dom.createTextNode(Integer.toString(islandTransponder)));
 				dataElem.appendChild(e);
+
+				e = dom.createElement("ZR_Island"+island);
+				e.appendChild(dom.createTextNode(Integer.toString(island_ZR)));
+				dataElem.appendChild(e);
+
+				e = dom.createElement("LR_Island"+island);
+				e.appendChild(dom.createTextNode(Integer.toString(island_LR)));
+				dataElem.appendChild(e);
+
 
 			}
 
