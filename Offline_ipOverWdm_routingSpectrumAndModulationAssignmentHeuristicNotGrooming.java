@@ -141,17 +141,57 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 
 		// Order netPlan.getDemands(ipLayer) according
-		// to qosType (priority first, best-effort last)
+		// to qosType (priority first, best-effort last) and length of the shortest path
 		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
 		orderedDemands.sort((d1, d2) -> {
-			if (Objects.equals(d1.getQosType(), d2.getQosType()))
-				return (int) (getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(),d1.getEgressNode())).get(0))-getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(),d2.getEgressNode())).get(0)));
-			if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
+			if (d1.getQosType().equals(QOS_TYPE_PRIORITY) && d2.getQosType().equals(QOS_TYPE_BEST_EFFORT)) {
 				return -1;
-			if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
+			} else if (d1.getQosType().equals(QOS_TYPE_BEST_EFFORT) && d2.getQosType().equals(QOS_TYPE_PRIORITY)) {
 				return 1;
-			return 0;
+			} else {
+				return Double.compare(
+						getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(), d1.getEgressNode())).get(0)),
+						getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(), d2.getEgressNode())).get(0))
+				);
+			}
+
 		});
+
+
+		// check correctness of orderedDemands
+		for (Demand ipDemand : orderedDemands) {
+			// check if the current ipDemand is BEST_EFFORT and the next one is PRIORITY
+			if (ipDemand.getQosType().equals(QOS_TYPE_BEST_EFFORT)) {
+				for (Demand ipDemand2 : orderedDemands) {
+					if (ipDemand2.getQosType().equals(QOS_TYPE_PRIORITY)) {
+						if (orderedDemands.indexOf(ipDemand) < orderedDemands.indexOf(ipDemand2)) {
+							throw new Net2PlanException("orderedDemands is not correct: BEST_EFFORT after PRIORITY");
+						}
+					}
+				}
+			}
+			// check if the current ipDemand have the path length less than the next one
+			for (Demand ipDemand2 : orderedDemands) {
+				if (orderedDemands.indexOf(ipDemand) < orderedDemands.indexOf(ipDemand2)) {
+					String qosType1 = ipDemand.getQosType();
+					String qosType2 = ipDemand2.getQosType();
+
+					if (qosType1.equals(qosType2)) { // if both are BEST_EFFORT or both are PRIORITY
+						double length1 = getLengthInKm(cpl.get(Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode())).get(0));
+						double length2 = getLengthInKm(cpl.get(Pair.of(ipDemand2.getIngressNode(), ipDemand2.getEgressNode())).get(0));
+						int index1 = orderedDemands.indexOf(ipDemand);
+						int index2 = orderedDemands.indexOf(ipDemand2);
+						// save type of QoS
+
+						if (length1 > length2) { // if the path length of the current ipDemand is greater than the next one
+							throw new Net2PlanException("orderedDemands is not correct: wrong order of path length\n" +
+									qosType1 + " " + length1 + "(" + index1 + ")\n" +
+									qosType2 + length2 + "(" + index2 + ")");
+						}
+					}
+				}
+			}
+		}
 
 		for (Demand ipDemand : orderedDemands) {
 
