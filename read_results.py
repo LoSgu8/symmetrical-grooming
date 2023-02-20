@@ -118,7 +118,7 @@ axs[1].set_ylim(0, y_max)
 
 plt.show()
 
-# PLOT 3: average (# of transponders/(# of demands*# of nodes)) per island
+## PLOT 3: average (# of transponders/(# of demands*# of nodes)) per island
 plt.figure()
 island_labels = ['Island ' + str(x) for x in range(1, 10)]
 number_of_transponder_per_island_attribute_name = ['Transponder_Island' + str(x) for x in range(1, 10)]
@@ -151,13 +151,14 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-
-# PLOT 4: number of transponders per node
+## PLOT 4: number of transponders per node
 plt.figure()
+num_demands = 700
+# multiple transponder
+results_multiple_filtered = results_multiple[results_multiple['demands'] == num_demands]
+results_single_filtered = results_single[results_single['demands'] == num_demands]
 # selects all the columns whose name starts with 'ZR_Node', extract in a list the string after 'ZR_Node'
 node_labels = [x[7:] for x in results_multiple.columns if x.startswith('ZR_Node')]
-
-
 
 # for each node in node_labels find the average number of transponders per node given by 'ZR_Node<node>'+'LR_Node<node>'
 yZR_multiple = np.zeros(len(node_labels))
@@ -169,12 +170,12 @@ average_number_of_transponders_per_node_multiple = np.zeros(len(node_labels))
 average_number_of_transponders_per_node_single = np.zeros(len(node_labels))
 
 for i in range(len(node_labels)):
-    yZR_multiple[i] = results_multiple['ZR_Node' + node_labels[i]].sum()
-    yLR_multiple[i] = results_multiple['LR_Node' + node_labels[i]].sum()
-    yZR_single[i] = results_single['ZR_Node' + node_labels[i]].sum()
-    yLR_single[i] = results_single['LR_Node' + node_labels[i]].sum()
-    average_number_of_transponders_per_node_multiple[i] = (yZR_multiple[i] + yLR_multiple[i])/results_multiple.shape[0]
-    average_number_of_transponders_per_node_single[i] = (yZR_single[i] + yLR_single[i])/results_single.shape[0]
+    yZR_multiple[i] = results_multiple_filtered['ZR_Node' + node_labels[i]].sum()
+    yLR_multiple[i] = results_multiple_filtered['LR_Node' + node_labels[i]].sum()
+    yZR_single[i] = results_single_filtered['ZR_Node' + node_labels[i]].sum()
+    yLR_single[i] = results_single_filtered['LR_Node' + node_labels[i]].sum()
+    average_number_of_transponders_per_node_multiple[i] = (yZR_multiple[i] + yLR_multiple[i])/results_multiple_filtered.shape[0]
+    average_number_of_transponders_per_node_single[i] = (yZR_single[i] + yLR_single[i])/results_single_filtered.shape[0]
 
 # replace '-' with ' ' in node_labels elements
 node_labels = [x.replace('-', ' ') for x in node_labels]
@@ -189,6 +190,3 @@ plt.ylabel('# of transponders')
 plt.legend()
 plt.grid(True)
 plt.show()
-
-
-
