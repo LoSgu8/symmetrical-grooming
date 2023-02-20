@@ -157,35 +157,37 @@ plt.show()
 
 plt.figure()
 island_labels = ['Island ' + str(x) for x in range(1, 10)]
-number_of_transponder_per_island_attribute_name = ['Transponder_Island' + str(x) for x in range(1, 10)]
+number_of_ZR_per_island_attribute_name = ['ZR_Island' + str(x) for x in range(1, 10)]
+number_of_LR_per_island_attribute_name = ['LR_Island' + str(x) for x in range(1, 10)]
 x = np.arange(len(island_labels))
 width = 0.35
 
 
-zr_per_island_attribute = []
-lr_per_island_attribute = []
+zr_per_island_attribute = np.zeros(9)
+lr_per_island_attribute = np.zeros(9)
 
-cost_per_island_attribute = []
+cost_per_island_attribute = np.zeros(9)
 
-weighted_cost_per_island_size_multiple = []
-weighted_cost_per_island_size_single = []
+weighted_cost_per_island_size_multiple = np.zeros(9)
+weighted_cost_per_island_size_single = np.zeros(9)
 
 # y_single
-for i in range (1,10):
-    zr_per_island_attribute[i-1] = int(results_single["ZR_Island"+str(i)])
-    lr_per_island_attribute[i-1] = int(results_single["LR_Island"+str(i)])
 
-    cost_per_island_attribute[i-1] = zr_per_island_attribute[i-1]*0.5 + lr_per_island_attribute[i-1]
+zr_per_island_attribute = results_single[number_of_ZR_per_island_attribute_name]
+lr_per_island_attribute = results_single[number_of_LR_per_island_attribute_name]
+
+cost_per_island_attribute = zr_per_island_attribute[i-1]*0.5 + lr_per_island_attribute[i-1]
 
 
 for i in range (1,10):
     weighted_cost_per_island_size_single[i-1] += cost_per_island_attribute[i-1]*island_size[i-1]
 
+plt.bar()
 
 #y_multiple
 for i in range (1,10):
-    zr_per_island_attribute[i-1] = int(results_multiple["ZR_Island"+str(i)])
-    lr_per_island_attribute[i-1] = int(results_multiple["LR_Island"+str(i)])
+    zr_per_island_attribute[i-1] = results_multiple["ZR_Island"+str(i)]
+    lr_per_island_attribute[i-1] = results_multiple["LR_Island"+str(i)]
 
     cost_per_island_attribute[i-1] = zr_per_island_attribute[i-1]*0.5 + lr_per_island_attribute[i-1]
 
@@ -193,6 +195,8 @@ for i in range (1,10):
     weighted_cost_per_island_size_multiple[i-1] += cost_per_island_attribute[i-1]*island_size[i-1]
 
 
+plt.bar(x+width/2, weighted_cost_per_island_size_single, width, label="single")
+plt.bar(x-width/2, weighted_cost_per_island_size_multiple, width, label="multiple")
 
 plt.xticks(x, island_labels)
 plt.title('Average number of transponders per demand and per node in each island')

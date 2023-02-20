@@ -563,6 +563,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				}
 
+
+				// Add transponder per island, ZR and LR per island
 				islandTransponder += island_ZR + island_LR;
 
 				e = dom.createElement("Transponder_Island"+island);
@@ -577,8 +579,30 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				e.appendChild(dom.createTextNode(Integer.toString(island_LR)));
 				dataElem.appendChild(e);
 
-
 			}
+
+			// Add info per NODE:
+
+			List<Node> nodesList = new ArrayList<>(netPlan.getNodes());
+
+			int node_ZR = 0;
+			int node_LR = 0;
+
+			char ch = '-';
+
+			for(Node node: nodesList ){
+				node_ZR  = Integer.parseInt(node.getAttribute("ZR"));
+				node_LR  = Integer.parseInt(node.getAttribute("LR"));
+
+				e = dom.createElement("ZR_Node"+node.getName().replace(' ', ch));
+				e.appendChild(dom.createTextNode(Integer.toString(node_ZR)));
+				dataElem.appendChild(e);
+
+				e = dom.createElement("LR_Node"+node.getName().replace(' ', ch));
+				e.appendChild(dom.createTextNode(Integer.toString(node_LR)));
+				dataElem.appendChild(e);
+			}
+
 
 			//dataElem.appendChild(islandElement);
 
