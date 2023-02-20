@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <data>
+        <demands>650</demands>
+        <priority>532</priority>
+        <best_effort>118</best_effort>
+        <priority_percentage>0.5</priority_percentage>
+        <single_transponder_for_all>false</single_transponder_for_all>
+        <single_transponder_type>false</single_transponder_type>
+        <number_ZR>554</number_ZR>
+        <number_LR>366</number_LR>
+        <total_Cost>643</total_Cost>
+        <Transponder_Island1>73</Transponder_Island1>
+        <Transponder_Island2>95</Transponder_Island2>
+        <Transponder_Island3>187</Transponder_Island3>
+        <Transponder_Island4>127</Transponder_Island4>
+        <Transponder_Island5>35</Transponder_Island5>
+        <Transponder_Island6>83</Transponder_Island6>
+        <Transponder_Island7>188</Transponder_Island7>
+        <Transponder_Island8>36</Transponder_Island8>
+        <Transponder_Island9>96</Transponder_Island9>
+    </data>
+</root>
