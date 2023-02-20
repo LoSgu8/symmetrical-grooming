@@ -64,14 +64,17 @@ class_name = class_file.split("/")[-1].split(".")[0]
 all_iterations_failed = False
 num_demands = start_num_demands
 while(not all_iterations_failed):
+    count = 0
     all_iterations_failed = True
     # create folder for the current number of demands
     output_folder_demand = output_folder + "/demands" + str(num_demands)
-    print("Output path: " + output_folder_demand)
+    # print("Output path: " + output_folder_demand)
+    print(str(num_demands) + " demands")
     if not os.path.exists(output_folder_demand):
         os.makedirs(output_folder_demand)
     for iteration in range(num_iterations):
-        print("Running " + str(num_demands) + " demands, iteration " + str(iteration))
+        print("\tFails: "+str(count)+"/"+str(iteration), end='\r', flush=True)
+
         # run the command with subprocess
         result = subprocess.run(["java", "-jar", net2plan_cli_path, "--mode", "net-design", "--input-file", topology_file, "--output-file", "output.n2p", "--class-file", class_file, "--class-name", class_name, "--alg-param", "resultPath="+str(output_folder_demand), "--alg-param", "percentageOfCoreTraffic="+str(percentage_core), "--alg-param", "singleTransponderForAll="+str(singleTransponder), "--alg-param", "NumberOfDemands="+str(num_demands)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # display the command run in the terminal
@@ -82,10 +85,11 @@ while(not all_iterations_failed):
 
         # if the execution finished successfully, then at least one iteration was successful
         if ("Algorithm finished successfully") in result.stdout.decode("utf-8"):
-            print("\tExecution successful")
+            # print("\tExecution successful")
             all_iterations_failed = False
         else:
-            print("\tExecution failed")
+            count += 1
+            # print("\tExecution failed")
     num_demands += increment_num_demands
 
 # print at which number of demands the execution stopped
