@@ -143,18 +143,19 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		// Order netPlan.getDemands(ipLayer) according
 		// to qosType (priority first, best-effort last)
 		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
-		orderedDemands.sort((d1, d2) -> {
-			if (Objects.equals(d1.getQosType(), d2.getQosType())) {
-				double d = getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(), d1.getEgressNode())).get(0)) - getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(), d2.getEgressNode())).get(0));
-				if(d<0) return -1;
-				if(d>0) return 1;
+		orderedDemands.sort(new Comparator<Demand>() {
+			@Override
+			public int compare(Demand d1, Demand d2) {
+				if (Objects.equals(d1.getQosType(), d2.getQosType())) {
+					return Double.compare(getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(), d1.getEgressNode())).get(0)),
+							getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(), d2.getEgressNode())).get(0)));
+				}
+				if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
+					return -1;
+				if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
+					return 1;
 				return 0;
 			}
-			if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
-				return -1;
-			if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
-				return 1;
-			return 0;
 		});
 
 		for (Demand ipDemand : orderedDemands) {
