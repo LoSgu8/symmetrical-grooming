@@ -30,7 +30,7 @@ import java.util.*;
 
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
-	private final InputParameter k = new InputParameter ("k", 10 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
+	private final InputParameter k = new InputParameter ("k", 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
 	private final InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	// InputParameter to use a single type of transponder in the entire network
 	private final InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", false , "If true, a single transponder type is used in the entire network");
@@ -144,8 +144,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		// to qosType (priority first, best-effort last)
 		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
 		orderedDemands.sort((d1, d2) -> {
-			if (Objects.equals(d1.getQosType(), d2.getQosType()))
-				return (int) (getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(),d1.getEgressNode())).get(0))-getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(),d2.getEgressNode())).get(0)));
+			if (Objects.equals(d1.getQosType(), d2.getQosType())) {
+				double d = getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(), d1.getEgressNode())).get(0)) - getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(), d2.getEgressNode())).get(0));
+				if(d<0) return -1;
+				if(d>0) return 1;
+				return 0;
+			}
 			if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
 				return -1;
 			if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
