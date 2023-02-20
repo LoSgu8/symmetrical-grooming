@@ -143,7 +143,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		// Order netPlan.getDemands(ipLayer) according
 		// to qosType (priority first, best-effort last)
 		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
-		orderedDemands.sort(new Comparator<Demand>() {
+		/*orderedDemands.sort(new Comparator<Demand>() {
 			@Override
 			public int compare(Demand d1, Demand d2) {
 				if (Objects.equals(d1.getQosType(), d2.getQosType())) {
@@ -155,6 +155,15 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
 					return 1;
 				return 0;
+			}
+		});*/
+		orderedDemands.sort((d1, d2) -> {
+			if (d1.getQosType().equals(QOS_TYPE_PRIORITY) && d2.getQosType().equals(QOS_TYPE_BEST_EFFORT)) {
+				return -1;
+			} else if (d1.getQosType().equals(QOS_TYPE_BEST_EFFORT) && d2.getQosType().equals(QOS_TYPE_PRIORITY)) {
+				return 1;
+			} else {
+				return Double.compare(getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(), d1.getEgressNode())).get(0)), getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(), d2.getEgressNode())).get(0)));
 			}
 		});
 
