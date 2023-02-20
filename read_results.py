@@ -152,60 +152,43 @@ plt.legend()
 plt.show()
 
 
-
-# PLOT 4: cost per region size
-
+# PLOT 4: number of transponders per node
 plt.figure()
-island_labels = ['Island ' + str(x) for x in range(1, 10)]
-number_of_ZR_per_island_attribute_name = ['ZR_Island' + str(x) for x in range(1, 10)]
-number_of_LR_per_island_attribute_name = ['LR_Island' + str(x) for x in range(1, 10)]
-x = np.arange(len(island_labels))
+# selects all the columns whose name starts with 'ZR_Node', extract in a list the string after 'ZR_Node'
+node_labels = [x[7:] for x in results_multiple.columns if x.startswith('ZR_Node')]
+
+
+
+# for each node in node_labels find the average number of transponders per node given by 'ZR_Node<node>'+'LR_Node<node>'
+yZR_multiple = np.zeros(len(node_labels))
+yLR_multiple = np.zeros(len(node_labels))
+yZR_single = np.zeros(len(node_labels))
+yLR_single = np.zeros(len(node_labels))
+
+average_number_of_transponders_per_node_multiple = np.zeros(len(node_labels))
+average_number_of_transponders_per_node_single = np.zeros(len(node_labels))
+
+for i in range(len(node_labels)):
+    yZR_multiple[i] = results_multiple['ZR_Node' + node_labels[i]].sum()
+    yLR_multiple[i] = results_multiple['LR_Node' + node_labels[i]].sum()
+    yZR_single[i] = results_single['ZR_Node' + node_labels[i]].sum()
+    yLR_single[i] = results_single['LR_Node' + node_labels[i]].sum()
+    average_number_of_transponders_per_node_multiple[i] = (yZR_multiple[i] + yLR_multiple[i])/results_multiple.shape[0]
+    average_number_of_transponders_per_node_single[i] = (yZR_single[i] + yLR_single[i])/results_single.shape[0]
+
+# replace '-' with ' ' in node_labels elements
+node_labels = [x.replace('-', ' ') for x in node_labels]
+# plot a bar plot, each node having two bars, one for single transponder and one for multiple transponder
+x = np.arange(len(node_labels))
 width = 0.35
-
-
-zr_per_island_attribute = np.zeros(9)
-lr_per_island_attribute = np.zeros(9)
-
-cost_per_island_attribute = np.zeros(9)
-
-weighted_cost_per_island_size_multiple = np.zeros(9)
-weighted_cost_per_island_size_single = np.zeros(9)
-
-# y_single
-
-zr_per_island_attribute = results_single[number_of_ZR_per_island_attribute_name]
-lr_per_island_attribute = results_single[number_of_LR_per_island_attribute_name]
-
-cost_per_island_attribute = zr_per_island_attribute[i-1]*0.5 + lr_per_island_attribute[i-1]
-
-
-for i in range (1,10):
-    weighted_cost_per_island_size_single[i-1] += cost_per_island_attribute[i-1]*island_size[i-1]
-
-plt.bar()
-
-#y_multiple
-for i in range (1,10):
-    zr_per_island_attribute[i-1] = results_multiple["ZR_Island"+str(i)]
-    lr_per_island_attribute[i-1] = results_multiple["LR_Island"+str(i)]
-
-    cost_per_island_attribute[i-1] = zr_per_island_attribute[i-1]*0.5 + lr_per_island_attribute[i-1]
-
-for i in range (1,10):
-    weighted_cost_per_island_size_multiple[i-1] += cost_per_island_attribute[i-1]*island_size[i-1]
-
-
-plt.bar(x+width/2, weighted_cost_per_island_size_single, width, label="single")
-plt.bar(x-width/2, weighted_cost_per_island_size_multiple, width, label="multiple")
-
-plt.xticks(x, island_labels)
-plt.title('Average number of transponders per demand and per node in each island')
-plt.ylabel('cost per island size')
-plt.grid(True)
+plt.bar(x-width/2, average_number_of_transponders_per_node_single, width, label="single")
+plt.bar(x+width/2, average_number_of_transponders_per_node_multiple, width, label="multiple")
+plt.xticks(x, node_labels, rotation=90)
+plt.title('Average number of transponders per node')
+plt.ylabel('# of transponders')
 plt.legend()
+plt.grid(True)
 plt.show()
-
-
 
 
 
