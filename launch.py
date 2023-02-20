@@ -73,7 +73,7 @@ while(not all_iterations_failed):
     if not os.path.exists(output_folder_demand):
         os.makedirs(output_folder_demand)
     for iteration in range(num_iterations):
-        print("\tFails: "+str(count)+"/"+str(iteration), end='\r', flush=True)
+        print("Fails: "+str(count)+"/"+str(iteration), end='\r', flush=True)
 
         # run the command with subprocess
         result = subprocess.run(["java", "-jar", net2plan_cli_path, "--mode", "net-design", "--input-file", topology_file, "--output-file", "output.n2p", "--class-file", class_file, "--class-name", class_name, "--alg-param", "resultPath="+str(output_folder_demand), "--alg-param", "percentageOfCoreTraffic="+str(percentage_core), "--alg-param", "singleTransponderForAll="+str(singleTransponder), "--alg-param", "NumberOfDemands="+str(num_demands)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -89,7 +89,10 @@ while(not all_iterations_failed):
             all_iterations_failed = False
         else:
             count += 1
+            #print(result.stdout.decode("utf-8"))
             # print("\tExecution failed")
+    print("\033[A                             \033[A")
+    print(str(num_demands)+ " demands ended with "+str(count)+" fails on "+ str(num_iterations)+ " iterations")
     num_demands += increment_num_demands
 
 # print at which number of demands the execution stopped
