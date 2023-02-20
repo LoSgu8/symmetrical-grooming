@@ -588,9 +588,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			int node_ZR = 0;
 			int node_LR = 0;
 
+			int number_of_demands_per_node = 0;
+
 			char ch = '-';
 
+
 			for(Node node: nodesList ){
+
+				// Transponder info
 				node_ZR  = Integer.parseInt(node.getAttribute("ZR"));
 				node_LR  = Integer.parseInt(node.getAttribute("LR"));
 
@@ -601,6 +606,28 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				e = dom.createElement("LR_Node"+node.getName().replace(' ', ch));
 				e.appendChild(dom.createTextNode(Integer.toString(node_LR)));
 				dataElem.appendChild(e);
+
+				// Demands info
+
+				List<Demand> demandListNode = new ArrayList<>(node.getOutgoingDemands(wdmLayer));
+
+				number_of_demands_per_node = demandListNode.size();
+
+				e = dom.createElement("num_demands_Node"+node.getName().replace(' ', ch));
+				e.appendChild(dom.createTextNode(Integer.toString(number_of_demands_per_node)));
+				dataElem.appendChild(e);
+
+				int count_dem = 0;
+				for(Demand dem: demandListNode){
+
+					e = dom.createElement("Node"+node.getName().replace(' ', ch)+"number"+Integer.toString(count_dem));
+					e.appendChild(dom.createTextNode(dem.getEgressNode().getName().replace(' ', '-')));
+					dataElem.appendChild(e);
+					count_dem ++;
+				}
+				count_dem = 0;
+
+
 			}
 
 
