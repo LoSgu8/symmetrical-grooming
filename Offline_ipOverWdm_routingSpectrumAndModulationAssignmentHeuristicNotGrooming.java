@@ -144,7 +144,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		orderedDemands = new ArrayList<>(netPlan.getDemands(ipLayer));
 		orderedDemands.sort((d1, d2) -> {
 			if (Objects.equals(d1.getQosType(), d2.getQosType()))
-				return 0;
+				return (int) (getLengthInKm(cpl.get(Pair.of(d1.getIngressNode(),d1.getEgressNode())).get(0))-getLengthInKm(cpl.get(Pair.of(d2.getIngressNode(),d2.getEgressNode())).get(0)));
 			if (Objects.equals(d1.getQosType(), QOS_TYPE_PRIORITY))
 				return -1;
 			if (Objects.equals(d2.getQosType(), QOS_TYPE_BEST_EFFORT))
