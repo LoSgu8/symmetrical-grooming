@@ -89,7 +89,7 @@ while(not all_iterations_failed):
             all_iterations_failed = False
         else:
             count += 1
-            #print(result.stdout.decode("utf-8"))
+            print(result.stdout.decode("utf-8"))
             # print("\tExecution failed")
     print("\033[A                             \033[A")
     print(str(num_demands)+ " demands ended with "+str(count)+" fails on "+ str(num_iterations)+ " iterations")
