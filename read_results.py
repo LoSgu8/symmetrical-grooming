@@ -72,7 +72,7 @@ plt.ylabel('average cost')
 plt.title('Average cost per demand')
 plt.legend(['single transponder', 'multiple transponder'])
 # set xticks to be the same for both plots equal to the union of the two sets
-plt.xticks(np.union1d(x_single, x_multiple))
+plt.xticks(np.union1d(x_single, x_multiple), rotation=90)
 plt.grid(True)
 plt.show()
 
@@ -92,7 +92,7 @@ width = 0.35
 axs[0].bar(x, yZR_multiple+yLR_multiple, width*2, yerr=total_std, capsize=10, label='total', alpha=0.2)
 axs[0].bar(x - width/2, yZR_multiple, width, yerr=ZRstd, capsize=5, label='ZR')
 axs[0].bar(x + width/2, yLR_multiple, width, yerr=LRstd, capsize=5, label='LR')
-axs[0].set_xticks(x, str_demands)
+axs[0].set_xticks(x, str_demands, rotation=90)
 axs[0].set_title('Multiple transponder')
 axs[0].set_xlabel('number of demands')
 axs[0].set_ylabel('average number of transponders')
@@ -144,7 +144,7 @@ for i in range(9):
 
 plt.bar(x+width/2, y_multiple, width, label="multiple")
 
-plt.xticks(x, island_labels)
+plt.xticks(x, island_labels, rotation=90)
 plt.title('Average number of transponders per demand and per node in each island')
 plt.ylabel('# of transponders')
 plt.grid(True)
