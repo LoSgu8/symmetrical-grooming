@@ -24,13 +24,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 // Main class
 
 
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
-	private final InputParameter k = new InputParameter ("k", 10 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
+	private final InputParameter k = new InputParameter ("k", 20 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
 	private final InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	// InputParameter to use a single type of transponder in the entire network
 	private final InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", false , "If true, a single transponder type is used in the entire network");
@@ -159,90 +165,65 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		for (Demand ipDemand : orderedDemands) {
 
-			boolean atLeastOnePath = false;
-			int bestPathCost = Integer.MAX_VALUE;
-			List<List<Link>> bestPath = null;
-			List<Modulation> bestPathModulations = null;
-
+			AtomicBoolean atLeastOnePath = new AtomicBoolean(false);
+			AtomicInteger bestPathCost = new AtomicInteger(Integer.MAX_VALUE);
+			AtomicReference<List<List<Link>>> bestPath = new AtomicReference<>(null);
+			AtomicReference<List<Modulation>> bestPathModulations = new AtomicReference<>(null);
+			ExecutorService executor = Executors.newFixedThreadPool(4);
 
 			for (List<Link> singlePath : cpl.get(Pair.of(ipDemand.getIngressNode(), ipDemand.getEgressNode()))) {
 
-				List<List<Link>> subpathsList;
+				executor.submit(() -> {
 
-				// if singleTransponderForAll is false, then the path is split in subpaths, each one with a different transponder
-				if (!singleTransponderForAll.getBoolean()){
-					//path -> list(subpath)
-					subpathsList = calculateSubPath(singlePath);
-				} else {
-					//path -> list(path)
-					subpathsList = new ArrayList<>();
-					subpathsList.add(singlePath);
-				}
+					List<List<Link>> subpathsList;
 
-				List<Modulation> modulationsList = new ArrayList<>();
-				for (int ind = 0; ind < subpathsList.size(); ind++) {
-					List<Link> subpath = subpathsList.get(ind);
-
-					// If subpath length is longer than the maximum reach of the transponder -> split the subpath in shorter subpaths
-
-					String tag;
-					if (!singleTransponderForAll.getBoolean()) {
-						List<String> tags = new ArrayList<>(subpath.get(0).getTags());
-						tags.retainAll(Arrays.asList(SUBREGION_TYPE_CORE,SUBREGION_TYPE_METRO));
-						tag = tags.get(0); // "METRO" or "CORE"
+					// if singleTransponderForAll is false, then the path is split in subpaths, each one with a different transponder
+					if (!singleTransponderForAll.getBoolean()){
+						//path -> list(subpath)
+						subpathsList = calculateSubPath(singlePath);
 					} else {
-						if (singleTransponderType.getBoolean()) {
-							tag = SUBREGION_TYPE_CORE; // Long Reach is used in the entire network
+						//path -> list(path)
+						subpathsList = new ArrayList<>();
+						subpathsList.add(singlePath);
+					}
+
+					List<Modulation> modulationsList = new ArrayList<>();
+					for (int ind = 0; ind < subpathsList.size(); ind++) {
+						List<Link> subpath = subpathsList.get(ind);
+
+						// If subpath length is longer than the maximum reach of the transponder -> split the subpath in shorter subpaths
+
+						String tag;
+						if (!singleTransponderForAll.getBoolean()) {
+							List<String> tags = new ArrayList<>(subpath.get(0).getTags());
+							tags.retainAll(Arrays.asList(SUBREGION_TYPE_CORE,SUBREGION_TYPE_METRO));
+							tag = tags.get(0); // "METRO" or "CORE"
 						} else {
-							tag = SUBREGION_TYPE_METRO; // ZR+ is used in the entire network
+							if (singleTransponderType.getBoolean()) {
+								tag = SUBREGION_TYPE_CORE; // Long Reach is used in the entire network
+							} else {
+								tag = SUBREGION_TYPE_METRO; // ZR+ is used in the entire network
+							}
 						}
-					}
-					if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
-						List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(tag));
-						int index = subpathsList.indexOf(subpath);
-						subpathsList.remove(subpath);
-						subpathsList.addAll(index, subsubpaths);
-						subpath = subpathsList.get(ind);
-					}
-					//find the best modulation
-					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
-					modulationsList.add(bestModulation);
-				}
-
-				boolean successInFindingPath = true;
-
-				// check if the entire path has available resources
-				for (int ind = 0; ind < subpathsList.size(); ind++) {
-					List<Link> subpath = subpathsList.get(ind);
-					Modulation modulation = modulationsList.get(ind);
-					//check if an ipLink already exists, if not check the wdm availability
-					boolean ipToAdd = true;
-					for(IPLink link: mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(),subpath.get(subpath.size()-1).getDestinationNode())))
-					{
-						if(link.getSpareCapacity()>=ipDemand.getOfferedTraffic())
-						{
-							ipToAdd = false;
-							break;
+						if (this.transponders.get(tag).getMaxReach() <= getLengthInKm(subpath)) {
+							List<List<Link>> subsubpaths = calculateSubPathsBasedOnTransponder(subpath, this.transponders.get(tag));
+							int index = subpathsList.indexOf(subpath);
+							subpathsList.remove(subpath);
+							subpathsList.addAll(index, subsubpaths);
+							subpath = subpathsList.get(ind);
 						}
+						//find the best modulation
+						Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
+						modulationsList.add(bestModulation);
 					}
-					if(ipToAdd) {
-						int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
-						if (slotid == -1) {
-							successInFindingPath = false;
-							break;
-						}
-					}
-				}
 
-				// if the entire path is able to accommodate the demand, calculate cost and store the path with the smallest cost
-				if (successInFindingPath) {
+					boolean successInFindingPath = true;
 
-					atLeastOnePath = true;
-					int cost = 0;
-					for(int ind = 0; ind < subpathsList.size(); ind++)
-					{
+					// check if the entire path has available resources
+					for (int ind = 0; ind < subpathsList.size(); ind++) {
 						List<Link> subpath = subpathsList.get(ind);
 						Modulation modulation = modulationsList.get(ind);
+						//check if an ipLink already exists, if not check the wdm availability
 						boolean ipToAdd = true;
 						for(IPLink link: mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(),subpath.get(subpath.size()-1).getDestinationNode())))
 						{
@@ -252,28 +233,60 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 								break;
 							}
 						}
-						if(ipToAdd)
-						{
-							if (transponders.get(SUBREGION_TYPE_CORE).getModulations().contains(modulation)) {
-								cost += transponders.get(SUBREGION_TYPE_CORE).getCost() * 2;
-
-							} else {
-								cost += transponders.get(SUBREGION_TYPE_METRO).getCost() * 2;
+						if(ipToAdd) {
+							int slotid = WDMUtils.spectrumAssignment_firstFit(subpath, frequencySlot2FiberOccupancy_se, modulation.getChannelSpacing());
+							if (slotid == -1) {
+								successInFindingPath = false;
+								break;
 							}
 						}
 					}
-					if(cost<bestPathCost)
-					{
-						bestPathCost = cost;
-						bestPath = subpathsList;
-						bestPathModulations = modulationsList;
+
+					// if the entire path is able to accommodate the demand, calculate cost and store the path with the smallest cost
+					if (successInFindingPath) {
+
+						atLeastOnePath.set(true);
+						int cost = 0;
+						for (int ind = 0; ind < subpathsList.size(); ind++) {
+							List<Link> subpath = subpathsList.get(ind);
+							Modulation modulation = modulationsList.get(ind);
+							boolean ipToAdd = true;
+							for (IPLink link : mapIPLinks.get(Pair.of(subpath.get(0).getOriginNode(), subpath.get(subpath.size() - 1).getDestinationNode()))) {
+								if (link.getSpareCapacity() >= ipDemand.getOfferedTraffic()) {
+									ipToAdd = false;
+									break;
+								}
+							}
+							if (ipToAdd) {
+								if (transponders.get(SUBREGION_TYPE_CORE).getModulations().contains(modulation)) {
+									cost += transponders.get(SUBREGION_TYPE_CORE).getCost() * 2;
+
+								} else {
+									cost += transponders.get(SUBREGION_TYPE_METRO).getCost() * 2;
+								}
+							}
+						}
+
+						synchronized (bestPathCost) {
+							if (cost < bestPathCost.get()) {
+								bestPathCost.set(cost);
+								bestPath.set(subpathsList);
+								bestPathModulations.set(modulationsList);
+							}
+						}
 					}
-				}
+				});
 			}
 
+			executor.shutdown();
+			try {
+				executor.awaitTermination(1, TimeUnit.HOURS);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 
 			//if no path has been found, handle the possible error
-			if (!atLeastOnePath) {
+			if (!atLeastOnePath.get()) {
 				// if the demand Priority QoS, then return a message
 				if (Objects.equals(ipDemand.getQosType(), QOS_TYPE_PRIORITY)) {
 					throw new Net2PlanException("The demand from " + ipDemand.getIngressNode().getName() + " to " + ipDemand.getEgressNode().getName() + '\n' +
@@ -289,11 +302,11 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			}
 			else
 			{
-				assert bestPath != null;
+				assert bestPath.get() != null;
 				List<Link> IPPath = new ArrayList<>();
-				for (int ind = 0; ind < bestPath.size(); ind++) {
-					List<Link> subpath = bestPath.get(ind);
-					Modulation modulation = bestPathModulations.get(ind);
+				for (int ind = 0; ind < bestPath.get().size(); ind++) {
+					List<Link> subpath = bestPath.get().get(ind);
+					Modulation modulation = bestPathModulations.get().get(ind);
 					IPLink ipLink;
 					boolean ipToAdd=true;
 					//check for an existing ip link with spare capacity
