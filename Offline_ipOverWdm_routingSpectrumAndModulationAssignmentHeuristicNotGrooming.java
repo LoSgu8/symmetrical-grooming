@@ -181,9 +181,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			for(int pathIndex = 0; pathIndex<pathList.size();pathIndex+=5) {
 				CountDownLatch latch = new CountDownLatch(5);
 				for (int currentPathIndex=pathIndex;currentPathIndex<pathIndex+5;currentPathIndex++) {
-					if (currentPathIndex>pathList.size()){
+					if (currentPathIndex>=pathList.size()){
 						latch.countDown();
-						break;
+						continue;
 					}
 					List<Link> singlePath = pathList.get(currentPathIndex);
 					executor.submit(() -> {
