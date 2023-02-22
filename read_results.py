@@ -269,16 +269,16 @@ plt.show()
 # -- PLOT 6: top ten number of transponders per node in multiple case
 plt.figure(num=6)
 # find the top ten nodes with the highest number of transponders in the multiple transponder case
-top_ten_nodes = np.argsort(average_number_of_transponders_per_node_multiple)[-10:]
-top_ten_nodes = top_ten_nodes[::-1]
-top_ten_nodes_labels = [node_labels[i] for i in top_ten_nodes]
-top_ten_nodes_values = [average_number_of_transponders_per_node_multiple[i] for i in top_ten_nodes]
+top_ten_nodes_multiple = np.argsort(average_number_of_transponders_per_node_multiple)[-10:]
+top_ten_nodes_multiple = top_ten_nodes_multiple[::-1]
+top_ten_nodes_multiple_labels = [node_labels[i] for i in top_ten_nodes_multiple]
+top_ten_nodes_multiple_values = [average_number_of_transponders_per_node_multiple[i] for i in top_ten_nodes_multiple]
 
 # plot a bar plot
-x = np.arange(len(top_ten_nodes_labels))
+x = np.arange(len(top_ten_nodes_multiple_labels))
 width = 0.35
-plt.bar(x, top_ten_nodes_values, width, label="multiple")
-plt.xticks(x, top_ten_nodes_labels, rotation=90)
+plt.bar(x, top_ten_nodes_multiple_values, width, label="multiple")
+plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90)
 plt.title('Top ten nodes with the highest number of transponders in the multiple case')
 plt.ylabel('# of transponders')
 plt.grid(True)
@@ -302,5 +302,78 @@ plt.ylabel('# of transponders')
 plt.legend()
 plt.grid(True)
 plt.show()
+
+# -- PLOT 8: top ten nodes with the highest number of transponders in the multiple case compared to the single case
+plt.figure(num=8)
+
+# extract number of transponders per node in the single case in the top_ten_nodes_multiple_labels
+top_ten_nodes_single_values = [average_number_of_transponders_per_node_single[node_labels.index(x)] for x in top_ten_nodes_multiple_labels]
+
+# plot a bar plot
+x = np.arange(len(top_ten_nodes_multiple_labels))
+width = 0.35
+plt.bar(x-width/2, top_ten_nodes_multiple_values, width, label="multiple")
+plt.bar(x+width/2, top_ten_nodes_single_values, width, label="single")
+plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90)
+plt.title('Top ten nodes with the highest number of transponders in the multiple case compared to the single case')
+plt.ylabel('# of transponders')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+# -- PLOT 9: number of simulation failures in the multiple case
+plt.figure(num=9)
+
+# find the number of simulation failures for each number of demands computed as (number of iterations) - (number of rows having <number of demands> as demands attribute)
+
+# compute the number of iterations as the number of rows having the minimum demands attribute
+minimum_demands = results_multiple['demands'].min()
+number_of_iterations = results_multiple[results_multiple['demands'] == minimum_demands].shape[0]
+
+# compute the number of simulation failures for each number of demands
+demands = results_multiple['demands'].unique()
+number_of_simulation_failures = np.zeros(len(demands))
+for i in range(len(demands)):
+    number_of_simulation_failures[i] = number_of_iterations - results_multiple[results_multiple['demands'] == demands[i]].shape[0]
+
+# plot a bar plot
+x = np.arange(len(demands))
+width = 0.35
+plt.bar(x, number_of_simulation_failures, width, label="multiple")
+plt.xticks(x, demands, rotation=90)
+plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
+plt.ylabel('# of failures')
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
+# -- PLOT 10: number of simulation failures in the single case
+plt.figure(num=10)
+
+minimum_demands = results_single['demands'].min()
+number_of_iterations = results_single[results_single['demands'] == minimum_demands].shape[0]
+demands = results_single['demands'].unique()
+number_of_simulation_failures = np.zeros(len(demands))
+for i in range(len(demands)):
+    number_of_simulation_failures[i] = number_of_iterations - results_single[results_single['demands'] == demands[i]].shape[0]
+
+x = np.arange(len(demands))
+width = 0.35
+plt.bar(x, number_of_simulation_failures, width, label="single")
+plt.xticks(x, demands, rotation=90)
+plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
+plt.ylabel('# of failures')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
 
 
