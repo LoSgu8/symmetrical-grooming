@@ -205,7 +205,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						subpath = subpathsList.get(ind);
 					}
 					//find the best modulation
-					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath), singleTransponderForAll.getBoolean()?Transponder.BEST_SPECTRUM_OCCUPANCY:Transponder.BEST_SPECTRAL_EFFICIENCY);
+					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath), singleTransponderForAll.getBoolean()?Transponder.LOWEST_SPECTRUM_OCCUPANCY :Transponder.HIGHEST_SPECTRAL_EFFICIENCY);
 					modulationsList.add(bestModulation);
 				}
 

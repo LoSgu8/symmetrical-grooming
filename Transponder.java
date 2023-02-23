@@ -16,26 +16,26 @@ public class Transponder {
     public double getCost () { return this.cost; }
     public List<Modulation> getModulations () { return this.modulationList; }
 
-    public static final int BEST_SPECTRAL_EFFICIENCY = 1;
-    public static final int BEST_SPECTRUM_OCCUPANCY = 2;
+    public static final int HIGHEST_SPECTRAL_EFFICIENCY = 1;
+    public static final int LOWEST_SPECTRUM_OCCUPANCY = 2;
     public Modulation getBestModulationFormat(double pathLength, int OBJECTIVE)
     {
         Modulation best = null;
         switch (OBJECTIVE){
-            case BEST_SPECTRUM_OCCUPANCY:
+            case LOWEST_SPECTRUM_OCCUPANCY:
                 int bestChannelSpacing = 0;
                 for (Modulation modulation : modulationList) {
                     if (modulation.getReach() >= pathLength) {
-                        if (modulation.getChannelSpacing() > bestChannelSpacing) {
+                        if (modulation.getChannelSpacing() < bestChannelSpacing) {
                             best = modulation;
                             bestChannelSpacing = modulation.getChannelSpacing();
                         }
                     }
                 }
                 break;
-            case BEST_SPECTRAL_EFFICIENCY:
+            case HIGHEST_SPECTRAL_EFFICIENCY:
             default:
-                if(OBJECTIVE== BEST_SPECTRAL_EFFICIENCY) {
+                if(OBJECTIVE== HIGHEST_SPECTRAL_EFFICIENCY) {
                     double bestSpectralEfficiency = 0;
                     for (Modulation modulation : modulationList) {
                         if (modulation.getReach() >= pathLength) {
