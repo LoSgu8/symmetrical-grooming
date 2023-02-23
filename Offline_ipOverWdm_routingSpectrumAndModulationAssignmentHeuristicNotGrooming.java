@@ -126,13 +126,17 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		}
         for(Node node: netPlan.getNodes())
         {
-            node.setAttribute("ZR",0);
-            node.setAttribute("LR",0);
+            node.setAttribute("ZR_in",0);
+			node.setAttribute("ZR_out",0);
+            node.setAttribute("LR_in",0);
+			node.setAttribute("LR_out",0);
         }
 		for(Link link: netPlan.getLinks(wdmLayer))
 		{
-			link.setAttribute("ZR",0);
-			link.setAttribute("LR",0);
+			link.setAttribute("ZR_in",0);
+			link.setAttribute("ZR_out",0);
+			link.setAttribute("LR_in",0);
+			link.setAttribute("LR_out",0);
 		}
 
 		// Generate the demands in the IP layer using TrafficGenerator Class
@@ -331,17 +335,17 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						WDMUtils.allocateResources(ipLink.getRsa(), frequencySlot2FiberOccupancy_se, null);
 						if (transponders.get(SUBREGION_TYPE_CORE).getModulations().contains(modulation)) {
 							totalCost += transponders.get(SUBREGION_TYPE_CORE).getCost() * 2;
-                            ipLink.getStartNode().setAttribute("LR",Integer.parseInt(ipLink.getStartNode().getAttribute("LR"))+1);
-                            ipLink.getEndNode().setAttribute("LR",Integer.parseInt(ipLink.getEndNode().getAttribute("LR"))+1);
-							ipLink.getPath().get(0).setAttribute("LR",Integer.parseInt(ipLink.getPath().get(0).getAttribute("LR"))+1);
-							ipLink.getPath().get(ipLink.getPath().size()-1).setAttribute("LR",Integer.parseInt(ipLink.getPath().get(ipLink.getPath().size()-1).getAttribute("LR"))+1);
+                            ipLink.getStartNode().setAttribute("LR_in",Integer.parseInt(ipLink.getStartNode().getAttribute("LR_in"))+1);
+                            ipLink.getEndNode().setAttribute("LR_out",Integer.parseInt(ipLink.getEndNode().getAttribute("LR_out"))+1);
+							ipLink.getPath().get(0).setAttribute("LR_in",Integer.parseInt(ipLink.getPath().get(0).getAttribute("LR_in"))+1);
+							ipLink.getPath().get(ipLink.getPath().size()-1).setAttribute("LR_out",Integer.parseInt(ipLink.getPath().get(ipLink.getPath().size()-1).getAttribute("LR_out"))+1);
 							totalLR += 2;
 						} else {
 							totalCost += transponders.get(SUBREGION_TYPE_METRO).getCost() * 2;
-                            ipLink.getStartNode().setAttribute("ZR",Integer.parseInt(ipLink.getStartNode().getAttribute("ZR"))+1);
-                            ipLink.getEndNode().setAttribute("ZR",Integer.parseInt(ipLink.getEndNode().getAttribute("ZR"))+1);
-							ipLink.getPath().get(0).setAttribute("ZR",Integer.parseInt(ipLink.getPath().get(0).getAttribute("ZR"))+1);
-							ipLink.getPath().get(ipLink.getPath().size()-1).setAttribute("ZR",Integer.parseInt(ipLink.getPath().get(ipLink.getPath().size()-1).getAttribute("ZR"))+1);
+                            ipLink.getStartNode().setAttribute("ZR_in",Integer.parseInt(ipLink.getStartNode().getAttribute("ZR_in"))+1);
+                            ipLink.getEndNode().setAttribute("ZR_out",Integer.parseInt(ipLink.getEndNode().getAttribute("ZR_out"))+1);
+							ipLink.getPath().get(0).setAttribute("ZR_in",Integer.parseInt(ipLink.getPath().get(0).getAttribute("ZR_in"))+1);
+							ipLink.getPath().get(ipLink.getPath().size()-1).setAttribute("ZR_out",Integer.parseInt(ipLink.getPath().get(ipLink.getPath().size()-1).getAttribute("ZR_out"))+1);
 							totalZR += 2;
 						}
 					}
@@ -551,8 +555,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				for(Link link:IslandLinks){
 
-					island_ZR += Integer.parseInt(link.getAttribute("ZR"));
-					island_LR += Integer.parseInt(link.getAttribute("LR"));
+					island_ZR += Integer.parseInt(link.getAttribute("ZR_in"));
+					island_ZR += Integer.parseInt(link.getAttribute("ZR_out"));
+					island_LR += Integer.parseInt(link.getAttribute("LR_in"));
+					island_LR += Integer.parseInt(link.getAttribute("LR_out"));
 
 				}
 
@@ -589,8 +595,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			for(Node node: nodesList ){
 
 				// Transponder info
-				node_ZR  = Integer.parseInt(node.getAttribute("ZR"));
-				node_LR  = Integer.parseInt(node.getAttribute("LR"));
+				node_ZR  = Integer.parseInt(node.getAttribute("ZR_in"))+Integer.parseInt(node.getAttribute("ZR_out"));
+				node_LR  = Integer.parseInt(node.getAttribute("LR_in"))+Integer.parseInt(node.getAttribute("LR_out"));
 
 				e = dom.createElement("ZR_Node"+node.getName().replace(' ', ch));
 				e.appendChild(dom.createTextNode(Integer.toString(node_ZR)));
@@ -618,6 +624,25 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					dataElem.appendChild(e);
 					count_dem ++;
 				}
+			}
+
+			for(Link link: netPlan.getLinks(wdmLayer))
+			{
+				e = dom.createElement("Link_"+link.getOriginNode().getName().replace(' ',ch)+link.getDestinationNode().getName().replace(' ',ch)+"_LR_in");
+				e.appendChild(dom.createTextNode(link.getAttribute("LR_in")));
+				dataElem.appendChild(e);
+
+				e = dom.createElement("Link_"+link.getOriginNode().getName().replace(' ',ch)+link.getDestinationNode().getName().replace(' ',ch)+"_LR_out");
+				e.appendChild(dom.createTextNode(link.getAttribute("LR_out")));
+				dataElem.appendChild(e);
+
+				e = dom.createElement("Link_"+link.getOriginNode().getName().replace(' ',ch)+link.getDestinationNode().getName().replace(' ',ch)+"_ZR_in");
+				e.appendChild(dom.createTextNode(link.getAttribute("ZR_in")));
+				dataElem.appendChild(e);
+
+				e = dom.createElement("Link_"+link.getOriginNode().getName().replace(' ',ch)+link.getDestinationNode().getName().replace(' ',ch)+"_ZR_out");
+				e.appendChild(dom.createTextNode(link.getAttribute("ZR_out")));
+				dataElem.appendChild(e);
 			}
 
 			rootElem.appendChild(dataElem);
