@@ -205,7 +205,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						subpath = subpathsList.get(ind);
 					}
 					//find the best modulation
-					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath), singleTransponderForAll.getBoolean()?Transponder.LOWEST_SPECTRUM_OCCUPANCY :Transponder.HIGHEST_SPECTRAL_EFFICIENCY);
+					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath), singleTransponderForAll.getBoolean()?Transponder.OBJECTIVE.LOWEST_SPECTRUM_OCCUPANCY :Transponder.OBJECTIVE.HIGHEST_SPECTRAL_EFFICIENCY);
 					modulationsList.add(bestModulation);
 				}
 
@@ -315,8 +315,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
 						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
 						ipLink.setN2PLink(n2pIPlink);
-						newDemand.coupleToUpperOrSameLayerLink(n2pIPlink);
-						n2pIPlink.coupleToLowerLayerDemand(newDemand);
 						ipLink.addDemand(ipDemand);
 						IPPath.add(n2pIPlink);
 						final double occupiedBandwidth = ipLink.getModulation().getChannelSpacing();

@@ -3,7 +3,7 @@ import java.util.List;
 public class Transponder {
     private final String name;
     private final double cost;
-    private List<Modulation> modulationList;
+    private final List<Modulation> modulationList;
 
     public Transponder(String name, double cost, List<Modulation> modulationList)
     {
@@ -16,17 +16,22 @@ public class Transponder {
     public double getCost () { return this.cost; }
     public List<Modulation> getModulations () { return this.modulationList; }
 
-    public static final int HIGHEST_SPECTRAL_EFFICIENCY = 1;
-    public static final int LOWEST_SPECTRUM_OCCUPANCY = 2;
-    public Modulation getBestModulationFormat(double pathLength, int OBJECTIVE)
+
+    public enum OBJECTIVE{
+        HIGHEST_SPECTRAL_EFFICIENCY,LOWEST_SPECTRUM_OCCUPANCY
+    }
+    public Modulation getBestModulationFormat(double pathLength, OBJECTIVE objective)
     {
         Modulation best = null;
-        switch (OBJECTIVE){
+        switch (objective){
             case LOWEST_SPECTRUM_OCCUPANCY:
                 int bestChannelSpacing = Integer.MAX_VALUE;
                 for (Modulation modulation : modulationList) {
                     if (modulation.getReach() >= pathLength) {
-                        if (modulation.getChannelSpacing() < bestChannelSpacing) {
+                        if (modulation.getChannelSpacing() < bestChannelSpacing
+                                || (modulation.getChannelSpacing()==bestChannelSpacing
+                                && modulation.getDatarate()>(best==null?0:best.getDatarate())))
+                        {
                             best = modulation;
                             bestChannelSpacing = modulation.getChannelSpacing();
                         }
@@ -35,14 +40,12 @@ public class Transponder {
                 break;
             case HIGHEST_SPECTRAL_EFFICIENCY:
             default:
-                if(OBJECTIVE== HIGHEST_SPECTRAL_EFFICIENCY) {
-                    double bestSpectralEfficiency = 0;
-                    for (Modulation modulation : modulationList) {
-                        if (modulation.getReach() >= pathLength) {
-                            if (modulation.getSpectralEfficiency() > bestSpectralEfficiency) {
-                                best = modulation;
-                                bestSpectralEfficiency = modulation.getSpectralEfficiency();
-                            }
+                double bestSpectralEfficiency = 0;
+                for (Modulation modulation : modulationList) {
+                    if (modulation.getReach() >= pathLength) {
+                        if (modulation.getSpectralEfficiency() > bestSpectralEfficiency) {
+                            best = modulation;
+                            bestSpectralEfficiency = modulation.getSpectralEfficiency();
                         }
                     }
                 }
