@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patheffects as pe
+import math
 
 # --- Read files ---
 
@@ -82,19 +83,25 @@ cost_single = results_single.groupby(['demands'])['total_Cost'].mean()
 cost_multiple = results_multiple.groupby(['demands'])['total_Cost'].mean()
 
 # plot single transponder
-plt.plot(list_num_demands[:len(cost_single)], cost_single, linewidth=2.0)
-plt.plot(list_num_demands[:len(cost_multiple)], cost_multiple, linewidth=2.0)
-plt.xlabel('number of demands')
-plt.ylabel('average cost')
-plt.title('Average cost per demand')
+plt.plot(list_num_demands[:len(cost_single)], cost_single, linewidth=2.0, color='C0')
+plt.plot(list_num_demands[:len(cost_multiple)], cost_multiple, linewidth=2.0, color='C1')
+plt.xlabel('number of demands', fontsize=15)
+plt.ylabel('average cost', fontsize=15)
+# plt.title('Average cost per demand')
 plt.legend(['single transponder', 'multiple transponder'])
-plt.xticks(list_num_demands, rotation=90)
+# show xticks starting from 0
+
+plt.xticks(list_num_demands, rotation=90, fontsize=12)
+# set starting y axis value to 0
+plt.ylim(ymin=0)
+
+plt.yticks(fontsize=12)
 plt.grid(True)
 plt.show()
 
 # -- PLOT 2: average number of transponders and average cost per number of demands
 fig, ax = plt.subplots(num=2)
-fig.suptitle('Average number of transponder per number of demands', fontsize=16)
+# fig.suptitle('Average number of transponder per number of demands', fontsize=16)
 # multiple transponder
 demands_multiple = results_multiple['demands'].unique()
 str_demands_multiple = [str(x) for x in demands_multiple]
@@ -112,30 +119,39 @@ transponder_single = results_single.groupby(['demands'])['number_ZR'].mean() \
                      + results_single.groupby(['demands'])['number_LR'].mean()
 width = 0.35
 
-ax.bar((x - width/2)[:len(transponder_multiple)], transponder_multiple, width, label='transponder_multiple')
-ax.bar((x + width/2)[:len(transponder_single)], transponder_single, width, label='transponder_single')
+ax.bar((x - width/2)[:len(transponder_multiple)], transponder_multiple, width, label='transponder_multiple', color='C1')
+ax.bar((x + width/2)[:len(transponder_single)], transponder_single, width, label='transponder_single', color='C0')
 
-ax.set_xticks(x_multiple, str_demands_multiple, rotation=90)
+ax.set_xticks(x_multiple, str_demands_multiple, rotation=90, fontsize=12)
+# change y axis font size
+ax.yaxis.set_tick_params(labelsize=12)
 # limit x axis to min(x_multiple.max(), x_single.max())
 ax.set_xlim(-1, min(x_multiple.max(), x_single.max())+10.5)
 
-ax.set_title('nb transponders and cost per number of demands')
-ax.set_xlabel('number of demands')
-ax.set_ylabel('average number of transponders')
+# ax.set_title('nb transponders and cost per number of demands')
+ax.set_xlabel('number of demands', fontsize=15)
+ax.set_ylabel('average number of transponders', fontsize=15)
 
 cost_axis = ax.twinx()
 # plot with line width 2 and edge width 0.5
-cost_axis.plot(x[:len(cost_multiple)], cost_multiple, label='cost_multiple', linewidth=2,
+cost_axis.plot(x[:len(cost_multiple)], cost_multiple, label='cost_multiple', linewidth=2, color='C1',
                path_effects=[pe.Stroke(linewidth=5, foreground='black'), pe.Normal()])
 
-cost_axis.plot(x[:len(cost_single)], cost_single, label='cost_single', linewidth=2,
+cost_axis.plot(x[:len(cost_single)], cost_single, label='cost_single', linewidth=2, color='C0',
                path_effects=[pe.Stroke(linewidth=5, foreground='black'), pe.Normal()])
-cost_axis.set_ylabel('average cost', color='red')
+cost_axis.set_ylabel('average cost', color='red', fontsize=15)
 cost_axis.tick_params(axis='y', labelcolor='red')
+# change y axis font size
+cost_axis.yaxis.set_tick_params(labelsize=12)
+
 
 # set y axis axs[0] and cost_axis_multiple limit to be max(y_multiple, yZR_multiple+yLR_multiple)
-ax.set_ylim(0, max(cost_multiple.max(), transponder_multiple.max()))
-cost_axis.set_ylim(0, max(cost_multiple.max(), transponder_multiple.max()))
+# ax.set_ylim(0, max(cost_multiple.max(), transponder_multiple.max()))
+# cost_axis.set_ylim(0, max(cost_multiple.max(), transponder_multiple.max()))
+# set ylim to 2500
+ax.set_ylim(0, 2500)
+cost_axis.set_ylim(0, 2500)
+
 
 ax.grid(True)
 ax.legend(loc='upper left')
@@ -146,7 +162,7 @@ plt.show()
 
 # -- PLOT 3: average number of transponders per number of demands with error bars
 fig, axs = plt.subplots(2, 1, num=3)
-fig.suptitle('Average number of transponder per number of demands', fontsize=16)
+# fig.suptitle('Average number of transponder per number of demands', fontsize=16)
 # multiple transponder
 demands = results_multiple['demands'].unique()
 str_demands = [str(x) for x in demands]
@@ -160,10 +176,12 @@ width = 0.35
 axs[0].bar(x, transponder_multiple, width*2, yerr=total_std, capsize=5, label='total', alpha=0.2)
 axs[0].bar(x - width/2, yZR_multiple, width, yerr=ZRstd, capsize=2, label='ZR')
 axs[0].bar(x + width/2, yLR_multiple, width, yerr=LRstd, capsize=2, label='LR')
-axs[0].set_xticks(x, str_demands, rotation=90)
-axs[0].set_title('Multiple transponder')
-axs[0].set_xlabel('number of demands')
-axs[0].set_ylabel('average number of transponders')
+axs[0].set_xticks(x, str_demands, rotation=90, fontsize=12)
+# change y axis font size
+axs[0].yaxis.set_tick_params(labelsize=12)
+axs[0].set_title('Multiple transponder', fontsize=20)
+#axs[0].set_xlabel('number of demands', fontsize=15)
+axs[0].set_ylabel('average number of transponders', fontsize=15)
 axs[0].grid(True)
 axs[0].legend()
 
@@ -174,10 +192,12 @@ total_std_single = np.sqrt(ZRstd_single**2 + LRstd_single**2)
 
 axs[1].bar(str_demands[:len(transponder_single)], transponder_single, width*2, yerr=total_std_single, capsize=5,
            alpha=0.2, label="total")
-axs[1].set_xticks(x, str_demands, rotation=90)
-axs[1].set_title('Single transponder')
-axs[1].set_xlabel('number of demands')
-axs[1].set_ylabel('average number of transponders')
+axs[1].set_xticks(x, str_demands, rotation=90, fontsize=12)
+# change y axis font size
+axs[1].yaxis.set_tick_params(labelsize=12)
+axs[1].set_title('Single transponder', fontsize=20)
+axs[1].set_xlabel('number of demands', fontsize=15)
+axs[1].set_ylabel('average number of transponders', fontsize=15)
 axs[1].grid(True)
 
 # same y limits for both plots equal to the maximum of the two sets
@@ -204,7 +224,7 @@ y_single = np.zeros(9)
 for i in range(9):
     y_single[i] = results_single[number_of_transponder_per_island_attribute_name[i]].sum() / \
                   results_single['demands'].sum()
-    y_single[i] = y_single[i]/island_size[i]
+    y_single[i] = y_single[i] / island_size[i]
 plt.bar(x-width/2, y_single, width, label="single")
 
 # multiple transponder
@@ -213,13 +233,15 @@ y_multiple = np.zeros(9)
 for i in range(9):
     y_multiple[i] = results_multiple[number_of_transponder_per_island_attribute_name[i]].sum() / \
                     results_multiple['demands'].sum()
-    y_multiple[i] = y_multiple[i]/island_size[i]
+    y_multiple[i] = y_multiple[i] / island_size[i]
 
-plt.bar(x+width/2, y_multiple, width, label="multiple")
+plt.bar(x+width/2, y_multiple, width, label="multiple", color='C1')
 
-plt.xticks(x, island_labels, rotation=90)
-plt.title('Average number of transponders per demand and per node in each island')
-plt.ylabel('# of transponders')
+plt.xticks(x, island_labels, rotation=90, fontsize=15)
+# change y axis font size
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Average number of transponders per demand and per node in each island')
+plt.ylabel('# of transponders', fontsize=17)
 plt.grid(True)
 plt.legend()
 plt.show()
@@ -257,11 +279,14 @@ node_labels = [x.replace('-', ' ') for x in node_labels]
 # plot a bar plot, each node having two bars, one for single transponder and one for multiple transponder
 x = np.arange(len(node_labels))
 width = 0.35
-plt.bar(x-width/2, average_number_of_transponders_per_node_single, width, label="single")
-plt.bar(x+width/2, average_number_of_transponders_per_node_multiple, width, label="multiple")
-plt.xticks(x, node_labels, rotation=90)
-plt.title('Average number of transponders per node')
-plt.ylabel('# of transponders')
+plt.bar(x-width/2, average_number_of_transponders_per_node_single, width, label="single", color='C0')
+plt.bar(x+width/2, average_number_of_transponders_per_node_multiple, width, label="multiple", color='C1')
+plt.xticks(x, node_labels, rotation=90, fontsize=12)
+
+# change y axis font size
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Average number of transponders per node')
+plt.ylabel('# of transponders', fontsize=17)
 plt.legend()
 plt.grid(True)
 plt.show()
@@ -269,7 +294,7 @@ plt.show()
 # -- PLOT 6: top ten number of transponders per node in multiple case
 plt.figure(num=6)
 # find the top ten nodes with the highest number of transponders in the multiple transponder case
-top_ten_nodes_multiple = np.argsort(average_number_of_transponders_per_node_multiple)[-10:]
+top_ten_nodes_multiple = np.argsort(average_number_of_transponders_per_node_multiple)[-15:]
 top_ten_nodes_multiple = top_ten_nodes_multiple[::-1]
 top_ten_nodes_multiple_labels = [node_labels[i] for i in top_ten_nodes_multiple]
 top_ten_nodes_multiple_values = [average_number_of_transponders_per_node_multiple[i] for i in top_ten_nodes_multiple]
@@ -277,17 +302,19 @@ top_ten_nodes_multiple_values = [average_number_of_transponders_per_node_multipl
 # plot a bar plot
 x = np.arange(len(top_ten_nodes_multiple_labels))
 width = 0.35
-plt.bar(x, top_ten_nodes_multiple_values, width, label="multiple")
-plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90)
-plt.title('Top ten nodes with the highest number of transponders in the multiple case')
-plt.ylabel('# of transponders')
+plt.bar(x, top_ten_nodes_multiple_values, width, label="multiple", color='C1')
+plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90, fontsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Top ten nodes with the highest number of transponders in the multiple case')
+plt.ylabel('# of transponders', fontsize=17)
+plt.legend()
 plt.grid(True)
 plt.show()
 
 # -- PLOT 7: top ten number of transponders per node in single transponder case
 plt.figure(num=7)
 # find the top ten nodes with the highest number of transponders in the single transponder case
-top_ten_nodes = np.argsort(average_number_of_transponders_per_node_single)[-10:]
+top_ten_nodes = np.argsort(average_number_of_transponders_per_node_single)[-15:]
 top_ten_nodes = top_ten_nodes[::-1]
 top_ten_nodes_labels = [node_labels[i] for i in top_ten_nodes]
 top_ten_nodes_values = [average_number_of_transponders_per_node_single[i] for i in top_ten_nodes]
@@ -295,15 +322,16 @@ top_ten_nodes_values = [average_number_of_transponders_per_node_single[i] for i 
 # plot a bar plot
 x = np.arange(len(top_ten_nodes_labels))
 width = 0.35
-plt.bar(x, top_ten_nodes_values, width, label="single")
-plt.xticks(x, top_ten_nodes_labels, rotation=90)
-plt.title('Top ten nodes with the highest number of transponders in the single case')
-plt.ylabel('# of transponders')
+plt.bar(x, top_ten_nodes_values, width, label="single", color='C0')
+plt.xticks(x, top_ten_nodes_labels, rotation=90, fontsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Top ten nodes with the highest number of transponders in the single case')
+plt.ylabel('# of transponders', fontsize=17)
 plt.legend()
 plt.grid(True)
 plt.show()
 
-# -- PLOT 8: top ten nodes with the highest number of transponders in the multiple case compared to the single case
+# -- PLOT 8: top 15 nodes with the highest number of transponders in the multiple case compared to the single case
 plt.figure(num=8)
 
 # extract number of transponders per node in the single case in the top_ten_nodes_multiple_labels
@@ -312,11 +340,12 @@ top_ten_nodes_single_values = [average_number_of_transponders_per_node_single[no
 # plot a bar plot
 x = np.arange(len(top_ten_nodes_multiple_labels))
 width = 0.35
-plt.bar(x-width/2, top_ten_nodes_multiple_values, width, label="multiple")
-plt.bar(x+width/2, top_ten_nodes_single_values, width, label="single")
-plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90)
-plt.title('Top ten nodes with the highest number of transponders in the multiple case compared to the single case')
-plt.ylabel('# of transponders')
+plt.bar(x-width/2, top_ten_nodes_multiple_values, width, label="multiple", color='C1')
+plt.bar(x+width/2, top_ten_nodes_single_values, width, label="single", color='C0')
+plt.xticks(x, top_ten_nodes_multiple_labels, rotation=90, fontsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Top ten nodes with the highest number of transponders in the multiple case compared to the single case')
+plt.ylabel('# of transponders', fontsize=17)
 plt.legend()
 plt.grid(True)
 plt.show()
@@ -340,10 +369,11 @@ for i in range(len(demands)):
 # plot a bar plot
 x = np.arange(len(demands))
 width = 0.35
-plt.bar(x, number_of_simulation_failures, width, label="multiple")
-plt.xticks(x, demands, rotation=90)
-plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
-plt.ylabel('# of failures')
+plt.bar(x, number_of_simulation_failures, width, label="multiple", color='C1')
+plt.xticks(x, demands, rotation=90, fontsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
+plt.ylabel('# of failures', fontsize=17)
 plt.legend()
 plt.grid(True)
 
@@ -361,13 +391,66 @@ for i in range(len(demands)):
 
 x = np.arange(len(demands))
 width = 0.35
-plt.bar(x, number_of_simulation_failures, width, label="single")
-plt.xticks(x, demands, rotation=90)
-plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
-plt.ylabel('# of failures')
+plt.bar(x, number_of_simulation_failures, width, label="single", color='C0')
+plt.xticks(x, demands, rotation=90, fontsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Number of simulation failures over ' + str(number_of_iterations) + ' iterations')
+plt.ylabel('# of failures', fontsize=17)
 plt.legend()
 plt.grid(True)
 plt.show()
+
+
+# PLOT 11 - ADB cost
+plt.figure(num=11)
+
+node_labels = [x.replace('-', ' ')[7:] for x in results_multiple.columns if x.startswith('ZR_Node')]
+
+# for each number of demands, compute the average costs of ADBs
+# ADB groups up to 16 transponders (LR+ZR) and its cost is 3.5 each
+demands = results_multiple['demands'].unique()
+average_adb_cost_multiple = np.zeros(len(demands))
+for demand in range(len(demands)):
+    # for each row having <number of demands> as demands attribute
+
+    num_adb_network = np.zeros(results_multiple[results_multiple['demands'] == demands[demand]].shape[0])
+    net_index = 0
+    for index, row in results_multiple[results_multiple['demands'] == demands[demand]].iterrows():
+        num_adb = np.zeros(len(node_labels))
+        num_row = 0
+        # compute the numbers of ADBs for each node
+        for node in node_labels:
+            sum_trasponders = 0
+            # add ZR transponders
+            sum_trasponders += row['ZR_Node'+node.replace(' ', '-')]
+            # add LR transponders
+            sum_trasponders += row['LR_Node'+node.replace(' ', '-')]
+            # compute the average cost of ADBs
+            num_adb[num_row] += math.ceil(sum_trasponders/16)
+            num_row += 1
+        num_adb_network[net_index] = num_adb.sum()
+        net_index += 1
+    average_adb_cost_multiple[demand] = num_adb_network.mean() * 3.5
+
+# plot a line plot
+plt.plot(demands, average_adb_cost_multiple, label="multiple", color='C1')
+plt.gca().xaxis.set_tick_params(labelsize=15)
+plt.gca().yaxis.set_tick_params(labelsize=15)
+# plt.title('Average ADB cost over ' + str(number_of_iterations) + ' iterations')
+plt.xlabel('# of demands', fontsize=17)
+plt.ylabel('ADB cost', fontsize=17)
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
+
+
 
 
 
