@@ -30,7 +30,7 @@ import java.util.*;
 
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
-	private final InputParameter k = new InputParameter ("k", 10 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
+	private final InputParameter k = new InputParameter ("k", 5, "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
 	private final InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", 4950 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	// InputParameter to use a single type of transponder in the entire network
 	private final InputParameter singleTransponderForAll = new InputParameter ("singleTransponderForAll", false , "If true, a single transponder type is used in the entire network");
@@ -205,7 +205,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						subpath = subpathsList.get(ind);
 					}
 					//find the best modulation
-					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath));
+					Modulation bestModulation = this.transponders.get(tag).getBestModulationFormat(getLengthInKm(subpath), singleTransponderForAll.getBoolean()?Transponder.BEST_SPECTRUM_OCCUPANCY:Transponder.BEST_SPECTRAL_EFFICIENCY);
 					modulationsList.add(bestModulation);
 				}
 
