@@ -315,6 +315,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 						Demand newDemand = netPlan.addDemand(ipLink.getStartNode(), ipLink.getEndNode(), ipLink.getModulation().getChannelSpacing(), RoutingType.SOURCE_ROUTING, null, wdmLayer);
 						Link n2pIPlink = netPlan.addLink(ipLink.getStartNode(),ipLink.getEndNode(),ipLink.getModulation().getDatarate(),ipLink.getRsa().getLengthInKm(),200000,null,ipLayer);
 						ipLink.setN2PLink(n2pIPlink);
+						newDemand.coupleToUpperOrSameLayerLink(n2pIPlink);
+						n2pIPlink.coupleToLowerLayerDemand(newDemand);
 						ipLink.addDemand(ipDemand);
 						IPPath.add(n2pIPlink);
 						final double occupiedBandwidth = ipLink.getModulation().getChannelSpacing();
