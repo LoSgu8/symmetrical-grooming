@@ -23,7 +23,7 @@ public class Transponder {
         Modulation best = null;
         switch (OBJECTIVE){
             case LOWEST_SPECTRUM_OCCUPANCY:
-                int bestChannelSpacing = 0;
+                int bestChannelSpacing = Integer.MAX_VALUE;
                 for (Modulation modulation : modulationList) {
                     if (modulation.getReach() >= pathLength) {
                         if (modulation.getChannelSpacing() < bestChannelSpacing) {
