@@ -620,6 +620,33 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				}
 			}
 
+			// Per link info
+
+			List<Link> linksList = new ArrayList<>(netPlan.getLinks(ipLayer));
+
+			int totalBitrate = 0;
+			int totalOccupiedBitrate = 0;
+			float avgBitrate = 0;
+			float avgOccupiedBitrate = 0;
+
+			for (Link link: linksList){
+				totalBitrate += link.getCapacity();
+				totalOccupiedBitrate += link.getOccupiedCapacity();
+			}
+
+			avgBitrate = totalBitrate/ linksList.size();
+			avgOccupiedBitrate =  totalOccupiedBitrate/ linksList.size();
+
+			e = dom.createElement("totalAverageBitrate");
+			e.appendChild(dom.createTextNode(Float.toString(avgBitrate)));
+			dataElem.appendChild(e);
+
+			e = dom.createElement("totalAverageOccupiedBitrate");
+			e.appendChild(dom.createTextNode(Float.toString(avgOccupiedBitrate)));
+			dataElem.appendChild(e);
+
+
+
 			rootElem.appendChild(dataElem);
 			dom.appendChild(rootElem);
 
